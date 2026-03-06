@@ -1,0 +1,287 @@
+@import "tailwindcss";
+
+:root {
+  --neon-green: #00ffaa;
+  --neon-blue: #00d4ff;
+  --neon-purple: #bf5fff;
+  --neon-pink: #ff2d7c;
+  --neon-yellow: #ffe156;
+  --bg-dark: #07080f;
+  --bg-card: #0d0f1a;
+  --bg-card-hover: #141729;
+  --border-dim: rgba(0, 255, 170, 0.1);
+  --border-glow: rgba(0, 255, 170, 0.3);
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: #e0e0e0;
+  background-image:
+    linear-gradient(rgba(0, 255, 170, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 170, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Scanline overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 6px
+  );
+}
+
+/* Cyberpunk card base */
+.cyber-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cyber-card:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 20px rgba(0, 255, 170, 0.08), inset 0 0 20px rgba(0, 255, 170, 0.03);
+}
+
+/* Neon glow variants */
+.glow-green { box-shadow: 0 0 15px rgba(0, 255, 170, 0.15), inset 0 0 15px rgba(0, 255, 170, 0.03); border-color: rgba(0, 255, 170, 0.3); }
+.glow-blue { box-shadow: 0 0 15px rgba(0, 212, 255, 0.15), inset 0 0 15px rgba(0, 212, 255, 0.03); border-color: rgba(0, 212, 255, 0.3); }
+.glow-purple { box-shadow: 0 0 15px rgba(191, 95, 255, 0.15), inset 0 0 15px rgba(191, 95, 255, 0.03); border-color: rgba(191, 95, 255, 0.3); }
+.glow-pink { box-shadow: 0 0 15px rgba(255, 45, 124, 0.15), inset 0 0 15px rgba(255, 45, 124, 0.03); border-color: rgba(255, 45, 124, 0.03); }
+.glow-yellow { box-shadow: 0 0 15px rgba(255, 225, 86, 0.15), inset 0 0 15px rgba(255, 225, 86, 0.03); border-color: rgba(255, 225, 86, 0.3); }
+
+/* Neon button */
+.cyber-btn {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+.cyber-btn:hover {
+  transform: translateY(-1px);
+}
+.cyber-btn:active {
+  transform: translateY(0);
+}
+
+/* Neon input */
+.cyber-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-dim);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cyber-input:focus {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.1);
+  outline: none;
+}
+
+/* Monospace for data */
+.font-mono-data {
+  font-family: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
+}
+
+/* Glitch text on hover */
+.glitch-hover:hover {
+  animation: glitch 0.3s ease;
+}
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(1px, 1px); }
+  100% { transform: translate(0); }
+}
+
+/* Achievement toast slide */
+@keyframes slideDown {
+  0% { opacity: 0; transform: translate(-50%, -20px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Corner decorations */
+.corner-marks::before,
+.corner-marks::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--neon-green);
+  opacity: 0.4;
+}
+.corner-marks::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.corner-marks::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+/* ─── Dashboard Layout ─── */
+
+.sidebar-nav {
+  width: 56px;
+  background: rgba(13, 15, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid var(--border-dim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  gap: 24px;
+  z-index: 50;
+}
+
+.sidebar-link {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #4a5568;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+.sidebar-link:hover {
+  color: var(--neon-green);
+  background: rgba(0, 255, 170, 0.05);
+}
+.sidebar-link.active {
+  color: var(--neon-green);
+  background: rgba(0, 255, 170, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.2);
+}
+
+.right-terminal {
+  width: 33.33%;
+  background: rgba(7, 8, 15, 0.9);
+  border-left: 1px solid var(--border-dim);
+  backdrop-filter: blur(8px);
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.right-terminal.collapsed {
+  width: 32px;
+}
+
+.terminal-toggle-right {
+  position: absolute;
+  top: 8px;
+  left: -24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  color: var(--neon-green);
+  font-family: monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  z-index: 60;
+}
+
+.hud-top-bar {
+  height: 40px;
+  background: rgba(13, 15, 26, 0.5);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 40;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 170, 0.15);
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 170, 0.3);
+}
+
+/* ─── Markdown Message Styles ─── */
+
+.md-message p {
+  word-break: break-word;
+}
+.md-list {
+  list-style: none;
+}
+.md-list > .md-list-item::before {
+  content: "▸";
+  color: var(--bullet-color, var(--neon-green));
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+.md-list-ol {
+  color: var(--bullet-color, var(--neon-green));
+}
+.md-list-ol > li::marker {
+  color: var(--bullet-color, var(--neon-green));
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 11px;
+}
+
+/* ─── Typing Indicator Animations ─── */
+
+@keyframes typingPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@keyframes typingBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typing-cursor {
+  animation: typingBlink 0.8s step-end infinite;
+}
+
+/* ─── Tool Progress Styles ─── */
+
+.tool-stage-done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.tool-stage-active {
+  animation: typingPulse 1.2s ease-in-out infinite;
+}
+@keyframes progressBarPulse {
+  0% { box-shadow: 0 0 4px rgba(0, 255, 170, 0.2); }
+  50% { box-shadow: 0 0 12px rgba(0, 255, 170, 0.5); }
+  100% { box-shadow: 0 0 4px rgba(0, 255, 170, 0.2); }
+}
+.progress-bar-glow {
+  animation: progressBarPulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Quick Reply Chips ─── */
+
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.quick-chip {
+  animation: chipFadeIn 0.3s ease-out both;
+}

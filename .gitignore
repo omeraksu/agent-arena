@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Vercel
+.vercel
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Hardhat / Solidity
+artifacts/
+cache/
+typechain-types/
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
+
+# Claude Code session data
+.claude/
+
+# Coverage
+coverage/

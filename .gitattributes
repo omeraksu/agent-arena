@@ -1,0 +1,27 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Force text
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+*.css text
+*.html text
+*.md text
+*.sql text
+*.sol text
+*.svg text
+
+# Force binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Lock files — generated, skip diff
+package-lock.json -diff linguist-generated=true
