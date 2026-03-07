@@ -6,21 +6,17 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
-import { createPublicClient, http, formatEther } from "viem";
-import { sepolia } from "viem/chains";
-import { createClient } from "@supabase/supabase-js";
+import { formatEther } from "viem";
+import { getSupabase } from "./_lib/supabase";
+import { publicClient } from "./_lib/viem";
+import { BoundedMap } from "./_lib/bounded-map";
 
-function getSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
-
-// ─── Rate Limiting ─────────────────────────────────────────────────────
+// ─── Rate Limiting / Energy System ────────────────────────────────────
 
 const RATE_LIMIT = 30;
-const sessionCounts = new Map<string, number>();
+const ENERGY_QUIZ_BONUS = 5;
+const sessionCounts = new BoundedMap<string, number>(200);
+const sessionBonuses = new BoundedMap<string, number>(200);
 
 // ─── Tool Definitions (Anthropic format) ───────────────────────────────
 
@@ -43,7 +39,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "request_transfer",
     description:
-      "Başka bir öğrenciden ETH transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.",
+      "Başka bir öğrenciden AVAX transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -53,7 +49,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
         },
         amount: {
           type: "string",
-          description: "İstenen ETH miktarı (ör: 0.01)",
+          description: "İstenen AVAX miktarı (ör: 0.01)",
         },
         reason: { type: "string", description: "İsteğin sebebi" },
       },
@@ -111,7 +107,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "request_faucet",
     description:
-      "Kullanıcıya test ETH gönderir. Kullanıcı 'ETH istiyorum', 'test ETH ver', 'faucet' dediğinde kullan.",
+      "Kullanıcıya test AVAX gönderir. Kullanıcı 'AVAX istiyorum', 'test AVAX ver', 'faucet' dediğinde kullan.",
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -120,7 +116,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "send_transfer",
     description:
-      "Kullanıcının KENDİ cüzdanından başka birine ETH transfer eder. Kullanıcı 'X'e ETH gönder' dediğinde kullan. Transfer otomatik gönderilir, ekstra onay gerekmez.",
+      "Kullanıcının KENDİ cüzdanından başka birine AVAX transfer eder. Kullanıcı 'X'e AVAX gönder' dediğinde kullan. Transfer otomatik gönderilir, ekstra onay gerekmez.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -130,7 +126,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
         },
         amount: {
           type: "string",
-          description: "Gönderilecek ETH miktarı (ör: 0.01). Maksimum 1 ETH.",
+          description: "Gönderilecek AVAX miktarı (ör: 0.01). Maksimum 1 AVAX.",
         },
         reason: {
           type: "string",
@@ -143,7 +139,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "check_balance",
     description:
-      "Kullanıcının cüzdan bakiyesini kontrol eder. 'Bakiyem ne?', 'ne kadar ETH var?' dediğinde kullan.",
+      "Kullanıcının cüzdan bakiyesini kontrol eder. 'Bakiyem ne?', 'ne kadar AVAX var?' dediğinde kullan.",
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -152,7 +148,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "explore_tx",
     description:
-      "Bir işlemin Etherscan explorer linkini oluşturur. İşlem detayı sorulduğunda kullan.",
+      "Bir işlemin Snowtrace explorer linkini oluşturur. İşlem detayı sorulduğunda kullan.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -284,6 +280,12 @@ interface ToolContext {
   apiBaseUrl: string;
 }
 
+function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function executeTool(
   name: string,
   input: Record<string, unknown>,
@@ -313,7 +315,7 @@ async function executeTool(
           }
         }
 
-        const res = await fetch(`${ctx.apiBaseUrl}/api/mint`, {
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/mint`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -331,7 +333,7 @@ async function executeTool(
         if (!res.ok) {
           return { success: false, error: data.error || "Mint başarısız" };
         }
-        await fetch(`${ctx.apiBaseUrl}/api/activity`, {
+        await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -352,7 +354,7 @@ async function executeTool(
       }
 
       case "request_transfer": {
-        const nameRes = await fetch(
+        const nameRes = await fetchWithTimeout(
           `${ctx.apiBaseUrl}/api/names?name=${encodeURIComponent(input.targetName as string)}`
         );
         const nameData = await nameRes.json();
@@ -362,7 +364,7 @@ async function executeTool(
             error: `"${input.targetName}" isimli kullanıcı bulunamadı`,
           };
         }
-        const res = await fetch(`${ctx.apiBaseUrl}/api/requests`, {
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/requests`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -378,7 +380,7 @@ async function executeTool(
         if (!res.ok) {
           return { success: false, error: data.error || "İstek gönderilemedi" };
         }
-        await fetch(`${ctx.apiBaseUrl}/api/activity`, {
+        await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -394,12 +396,12 @@ async function executeTool(
         });
         return {
           success: true,
-          message: `${input.targetName}'a ${input.amount} ETH isteği gönderildi`,
+          message: `${input.targetName}'a ${input.amount} AVAX isteği gönderildi`,
         };
       }
 
       case "discover_agents": {
-        const res = await fetch(`${ctx.apiBaseUrl}/api/agents`);
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/agents`);
         const data = await res.json();
         if (!res.ok) {
           return { success: false, error: "Agent listesi alınamadı" };
@@ -412,7 +414,7 @@ async function executeTool(
       }
 
       case "message_agent": {
-        const res = await fetch(`${ctx.apiBaseUrl}/api/agents`, {
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/agents`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -427,7 +429,7 @@ async function executeTool(
         if (!res.ok) {
           return { success: false, error: data.error || "Mesaj gönderilemedi" };
         }
-        await fetch(`${ctx.apiBaseUrl}/api/activity`, {
+        await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -447,7 +449,7 @@ async function executeTool(
       }
 
       case "check_messages": {
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${ctx.apiBaseUrl}/api/agents?messages=${encodeURIComponent(ctx.agentName)}`
         );
         const data = await res.json();
@@ -462,7 +464,7 @@ async function executeTool(
       }
 
       case "get_workshop_stats": {
-        const res = await fetch(`${ctx.apiBaseUrl}/api/activity`);
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`);
         const events = await res.json();
         if (!Array.isArray(events)) {
           return { success: false, error: "İstatistikler alınamadı" };
@@ -493,7 +495,7 @@ async function executeTool(
       }
 
       case "request_faucet": {
-        const res = await fetch(`${ctx.apiBaseUrl}/api/faucet`, {
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/faucet`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ address: ctx.userAddress }),
@@ -502,7 +504,7 @@ async function executeTool(
         if (!res.ok) {
           return { success: false, error: data.error || "Faucet başarısız" };
         }
-        await fetch(`${ctx.apiBaseUrl}/api/activity`, {
+        await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -514,7 +516,7 @@ async function executeTool(
         return {
           success: true,
           txHash: data.txHash,
-          message: "0.005 test ETH gönderildi!",
+          message: "0.005 test AVAX gönderildi!",
         };
       }
 
@@ -524,10 +526,10 @@ async function executeTool(
           return { success: false, error: "Geçersiz miktar" };
         }
         if (amount > 1) {
-          return { success: false, error: "Maksimum 1 ETH gönderilebilir" };
+          return { success: false, error: "Maksimum 1 AVAX gönderilebilir" };
         }
         // Resolve .arena name to address
-        const nameRes = await fetch(
+        const nameRes = await fetchWithTimeout(
           `${ctx.apiBaseUrl}/api/names?name=${encodeURIComponent(input.targetName as string)}`
         );
         const nameData = await nameRes.json();
@@ -551,10 +553,6 @@ async function executeTool(
       }
 
       case "check_balance": {
-        const publicClient = createPublicClient({
-          chain: sepolia,
-          transport: http("https://ethereum-sepolia-rpc.publicnode.com"),
-        });
         const balance = await publicClient.getBalance({
           address: ctx.userAddress as `0x${string}`,
         });
@@ -573,13 +571,13 @@ async function executeTool(
         }
         return {
           success: true,
-          url: `https://sepolia.etherscan.io/tx/${txHash}`,
+          url: `https://testnet.snowtrace.io/tx/${txHash}`,
           txHash,
         };
       }
 
       case "challenge_quiz": {
-        await fetch(`${ctx.apiBaseUrl}/api/activity`, {
+        await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -629,7 +627,7 @@ async function executeTool(
       }
 
       case "generate_nft_image": {
-        const imageRes = await fetch(`${ctx.apiBaseUrl}/api/generate-image`, {
+        const imageRes = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/generate-image`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -650,7 +648,7 @@ async function executeTool(
       }
 
       case "broadcast_arena_news": {
-        const res = await fetch(`${ctx.apiBaseUrl}/api/activity`);
+        const res = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`);
         const events = await res.json();
         if (!Array.isArray(events)) return { success: false, error: "Veri alınamadı" };
 
@@ -671,11 +669,12 @@ async function executeTool(
       }
 
       case "get_arena_mood": {
-        const agentsRes = await fetch(`${ctx.apiBaseUrl}/api/agents`);
+        const [agentsRes, actRes] = await Promise.all([
+          fetchWithTimeout(`${ctx.apiBaseUrl}/api/agents`),
+          fetchWithTimeout(`${ctx.apiBaseUrl}/api/activity`),
+        ]);
         const agentsData = await agentsRes.json();
         const agents = agentsData.agents || [];
-
-        const actRes = await fetch(`${ctx.apiBaseUrl}/api/activity`);
         const events = await actRes.json();
 
         const archetypeCounts: Record<string, number> = {};
@@ -714,7 +713,7 @@ async function executeTool(
                 contract: contractAddress || "henüz deploy edilmedi",
                 functions: ["mintTo(address)", "setBaseURI(string)", "totalSupply()", "tokenURI(uint256)"],
                 explorerUrl: contractAddress
-                  ? `https://sepolia.etherscan.io/address/${contractAddress}#code`
+                  ? `https://testnet.snowtrace.io/address/${contractAddress}#code`
                   : null,
               },
             };
@@ -735,7 +734,7 @@ async function executeTool(
             };
           }
           case "pirate": {
-            const faucetRes = await fetch(`${ctx.apiBaseUrl}/api/faucet`, {
+            const faucetRes = await fetchWithTimeout(`${ctx.apiBaseUrl}/api/faucet`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ address: ctx.userAddress }),
@@ -759,8 +758,8 @@ async function executeTool(
               archetype: "scientist",
               move: "run_experiment",
               data: {
-                network: "Sepolia Testnet",
-                chainId: 11155111,
+                network: "Avalanche Fuji Testnet",
+                chainId: 43113,
                 experiment: "Gas analizi — testnet'te gas ücreti düşük ama mainnet'te dikkatli olmalısın!",
               },
             };
@@ -867,10 +866,10 @@ PAZARLIKÇI MOD (öğrenci NFT istediğinde):
 - Veremezse ipucu ver, 3. denemede yönlendir
 
 ON-CHAIN AKSIYONLAR:
-- "ETH istiyorum", "test ETH ver", "faucet" → request_faucet (kullanıcıya test ETH gönderir)
-- "Kıvanç'a 0.01 ETH gönder" → send_transfer (kullanıcının cüzdanından DOĞRUDAN transfer — onay kartı yok, otomatik gider)
-- "Kıvanç'tan 0.01 ETH iste" → request_transfer (karşı tarafa istek gönderir)
-- "Bakiyem ne?", "ne kadar ETH var?" → check_balance
+- "AVAX istiyorum", "test AVAX ver", "faucet" → request_faucet (kullanıcıya test AVAX gönderir)
+- "Kıvanç'a 0.01 AVAX gönder" → send_transfer (kullanıcının cüzdanından DOĞRUDAN transfer — onay kartı yok, otomatik gider)
+- "Kıvanç'tan 0.01 AVAX iste" → request_transfer (karşı tarafa istek gönderir)
+- "Bakiyem ne?", "ne kadar AVAX var?" → check_balance
 - İşlem detayı, tx hash sorulursa → explore_tx
 
 ÖNEMLİ — TRANSFER AKIŞI:
@@ -879,7 +878,7 @@ ON-CHAIN AKSIYONLAR:
 - Kullanıcıya "Transfer gönderiliyor!" de, sonra sonucu bekle.
 
 TRANSFER İSTEK MODU:
-- Kullanıcı birinden ETH istediğinde → request_transfer tool'unu çağır
+- Kullanıcı birinden AVAX istediğinde → request_transfer tool'unu çağır
 - Kimden istediğini, miktarı ve sebebi öğrendikten sonra tool'u çağır
 
 AGENT İLETİŞİM:
@@ -1014,17 +1013,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     userAddress,
     userName,
     pendingAgentMessages,
+    recharge,
   } = req.body;
+
+  const sid = sessionId || "anonymous";
+
+  // Recharge: quiz tamamlandı → +5 enerji
+  if (recharge) {
+    const bonus = (sessionBonuses.get(sid) || 0) + ENERGY_QUIZ_BONUS;
+    sessionBonuses.set(sid, bonus);
+    const count = sessionCounts.get(sid) || 0;
+    const remaining = Math.max(0, RATE_LIMIT + bonus - count);
+    return res.status(200).json({ ok: true, energyRemaining: remaining, bonus });
+  }
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Geçersiz mesaj formatı" });
   }
 
-  // Rate limiting
-  const sid = sessionId || "anonymous";
+  // Rate limiting with energy bonuses
   const count = sessionCounts.get(sid) || 0;
-  if (count >= RATE_LIMIT) {
-    return res.status(429).json({ error: "Mesaj limitine ulaştın (30)" });
+  const bonus = sessionBonuses.get(sid) || 0;
+  const effectiveLimit = RATE_LIMIT + bonus;
+  if (count >= effectiveLimit) {
+    return res.status(429).json({
+      error: "Enerji bitti! Quiz cozerek yeniden sarj et.",
+      energyRemaining: 0,
+    });
   }
   sessionCounts.set(sid, count + 1);
 
@@ -1070,9 +1085,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   );
 
   // Set up SSE streaming
+  const energyRemaining = Math.max(0, effectiveLimit - (count + 1));
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Energy-Remaining", String(energyRemaining));
 
   try {
     // Agentic loop: call Claude, execute tools if requested, repeat
@@ -1148,16 +1165,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         content: finalMessage.content,
       });
 
-      // Execute tools and collect results
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      // Execute tools in parallel and collect results
+      const results = await Promise.all(
+        toolUses.map((toolUse) =>
+          executeTool(
+            toolUse.name,
+            toolUse.input as Record<string, unknown>,
+            toolCtx
+          )
+        )
+      );
 
-      for (const toolUse of toolUses) {
-        const result = await executeTool(
-          toolUse.name,
-          toolUse.input as Record<string, unknown>,
-          toolCtx
-        );
-
+      const toolResults: Anthropic.ToolResultBlockParam[] = toolUses.map((toolUse, i) => {
+        const result = results[i];
         // Send tool result through data channel (2: prefix)
         const toolData = JSON.stringify([
           {
@@ -1168,12 +1188,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ]);
         res.write(`2:${toolData}\n`);
 
-        toolResults.push({
-          type: "tool_result",
+        return {
+          type: "tool_result" as const,
           tool_use_id: toolUse.id,
           content: JSON.stringify(result),
-        });
-      }
+        };
+      });
 
       // Add tool results as user message and continue loop
       currentMessages.push({

@@ -18,7 +18,7 @@ export async function requestMint(address: string): Promise<{ txHash?: string; e
 
 export interface ActivityEvent {
   id: string;
-  type: "wallet_created" | "transfer" | "nft_mint" | "faucet" | "transfer_request" | "transfer_request_accepted" | "agent_registered" | "agent_message";
+  type: "wallet_created" | "transfer" | "nft_mint" | "faucet" | "transfer_request" | "transfer_request_accepted" | "agent_registered" | "agent_message" | "instructor_broadcast" | "freeze" | "unfreeze" | "workshop_ended" | "quiz_completed" | "session_reset" | "meme_submitted" | "meme_voted" | "meme_winner" | "signal_pulse" | "lobby_joined" | "workshop_started" | "workshop_created";
   address: string;
   data: Record<string, string>;
   created_at: string;
@@ -38,6 +38,125 @@ export async function postActivity(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(event),
   });
+}
+
+// ─── User Progress ───
+
+export async function getUserProgress(address: string): Promise<string[]> {
+  const res = await fetch(`/api/activity?progress=true&address=${encodeURIComponent(address)}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.types || [];
+}
+
+// ─── Squad Stats ───
+
+export interface SquadMilestone {
+  xp: number;
+  title: string;
+  emoji: string;
+}
+
+export interface SquadStats {
+  totalXP: number;
+  counts: Record<string, number>;
+  milestones: Array<SquadMilestone>;
+  allMilestones: Array<SquadMilestone>;
+}
+
+export async function getSquadStats(): Promise<SquadStats> {
+  const res = await fetch("/api/activity?stats=squad");
+  if (!res.ok) return { totalXP: 0, counts: {}, milestones: [], allMilestones: [] };
+  return res.json();
+}
+
+// ─── Instructor ───
+
+export async function sendBroadcast(password: string, message: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "broadcast", password, message }),
+  });
+  return res.json();
+}
+
+export async function setFreeze(password: string, freeze: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: freeze ? "freeze" : "unfreeze", password }),
+  });
+  return res.json();
+}
+
+export async function getWorkshopStats(password: string): Promise<Record<string, unknown>> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "stats", password }),
+  });
+  return res.json();
+}
+
+// ─── End Workshop ───
+
+export async function endWorkshop(password: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "end_workshop", password }),
+  });
+  return res.json();
+}
+
+// ─── Session Export / Reset ───
+
+export async function exportSession(password: string): Promise<void> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "export_session", password }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Export basarisiz");
+  }
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `agent-arena-export-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function resetSession(password: string): Promise<{ ok?: boolean; deleted?: Record<string, number>; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "reset_session", password, confirm: "SIFIRLA" }),
+  });
+  return res.json();
+}
+
+// ─── Oracle Recap ───
+
+export interface OracleRecap {
+  title: string;
+  description: string;
+  traits: string[];
+  emoji: string;
+}
+
+export async function generateRecap(address: string): Promise<{ recap?: OracleRecap; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "recap", address }),
+  });
+  return res.json();
 }
 
 // ─── NFT Metadata ───
@@ -76,7 +195,7 @@ export interface NftRecord {
 }
 
 export async function getNftsByAddress(address: string): Promise<NftRecord[]> {
-  const res = await fetch(`/api/nfts?address=${encodeURIComponent(address)}`);
+  const res = await fetch(`/api/mint?address=${encodeURIComponent(address)}`);
   if (!res.ok) return [];
   return res.json();
 }
@@ -258,4 +377,171 @@ export async function getAgentMessages(agentName: string): Promise<AgentMessage[
   if (!res.ok) return [];
   const data = await res.json();
   return data.messages || [];
+}
+
+// ─── Meme Arena ───
+
+export interface Meme {
+  id: string;
+  address: string;
+  username: string | null;
+  title: string;
+  image_url: string;
+  vote_count: number;
+  is_winner: boolean;
+  nft_token_id: number | null;
+  created_at: string;
+}
+
+export async function getMemes(address?: string): Promise<{ memes: Meme[]; hasSubmitted: boolean }> {
+  const params = address ? `?address=${encodeURIComponent(address)}` : "";
+  const res = await fetch(`/api/memes${params}`);
+  if (!res.ok) return { memes: [], hasSubmitted: false };
+  return res.json();
+}
+
+export async function submitMeme(data: {
+  address: string;
+  username?: string;
+  title: string;
+  imageBase64: string;
+  mimeType: string;
+}): Promise<{ ok?: boolean; memeId?: string; imageUrl?: string; error?: string }> {
+  const res = await fetch("/api/memes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function voteMeme(
+  memeId: string,
+  voterAddress: string,
+  memeTitle?: string
+): Promise<{ ok?: boolean; newVoteCount?: number; error?: string }> {
+  const res = await fetch("/api/memes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "vote", memeId, voterAddress, memeTitle }),
+  });
+  return res.json();
+}
+
+export async function finalizeMeme(password: string): Promise<{ ok?: boolean; winner?: { id: string; title: string; address: string; voteCount: number; tokenId?: number }; error?: string }> {
+  const res = await fetch("/api/instructor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "finalize_meme", password }),
+  });
+  return res.json();
+}
+
+// ─── Signal Pulse ───
+
+export interface SignalPulseRound {
+  status: "countdown" | "active" | "ended";
+  startTime: number;
+  duration: number;
+  remainingMs: number;
+  roundSignals: number;
+  roundParticipants: number;
+  syncScore: number | null;
+}
+
+export interface SignalPulseState {
+  totalSignals: number;
+  participantCount: number;
+  milestones: Array<{ threshold: number; title: string; emoji: string }>;
+  nextMilestone: { threshold: number; title: string; emoji: string } | null;
+  allMilestones: Array<{ threshold: number; title: string; emoji: string }>;
+  goalReached: boolean;
+  round: SignalPulseRound | null;
+}
+
+export async function getSignalPulse(): Promise<SignalPulseState> {
+  const res = await fetch("/api/signal-pulse");
+  if (!res.ok) return { totalSignals: 0, participantCount: 0, milestones: [], nextMilestone: null, allMilestones: [], goalReached: false, round: null };
+  return res.json();
+}
+
+export async function startPulseRound(password: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/signal-pulse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "start_round", password }),
+  });
+  return res.json();
+}
+
+export async function sendSignal(
+  address: string,
+  username?: string
+): Promise<{ ok?: boolean; totalSignals?: number; yourSignals?: number; participantCount?: number; milestoneReached?: { threshold: number; title: string; emoji: string } | null; goalReached?: boolean; error?: string; retryAfter?: number }> {
+  const res = await fetch("/api/signal-pulse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address, username }),
+  });
+  return res.json();
+}
+
+// ─── Lobby ───
+
+export interface LobbyParticipant {
+  address: string;
+  username: string | null;
+}
+
+export interface LobbyStatus {
+  status: "waiting" | "countdown" | "started" | "not_found";
+  participants?: LobbyParticipant[];
+  participantCount?: number;
+  countdownRemainingMs?: number;
+}
+
+export async function createWorkshop(password: string): Promise<{ ok?: boolean; code?: string; error?: string }> {
+  const res = await fetch("/api/lobby", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "create_workshop", password }),
+  });
+  return res.json();
+}
+
+export async function startWorkshop(password: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/lobby", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "start_workshop", password }),
+  });
+  return res.json();
+}
+
+export async function joinLobby(
+  code: string,
+  address: string,
+  username?: string
+): Promise<LobbyStatus> {
+  const res = await fetch("/api/lobby", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "join", code, address, username }),
+  });
+  return res.json();
+}
+
+export async function getLobbyStatus(code: string): Promise<LobbyStatus> {
+  const res = await fetch(`/api/lobby?code=${encodeURIComponent(code)}`);
+  if (!res.ok) return { status: "not_found" };
+  return res.json();
+}
+
+export async function resetLobby(password: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await fetch("/api/lobby", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "reset_lobby", password }),
+  });
+  return res.json();
 }

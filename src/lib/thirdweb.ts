@@ -1,6 +1,6 @@
 import { createThirdwebClient } from "thirdweb";
 import { inAppWallet } from "thirdweb/wallets";
-import { sepolia } from "thirdweb/chains";
+import { avalancheFuji } from "thirdweb/chains";
 
 export const client = createThirdwebClient({
   clientId: import.meta.env.VITE_THIRDWEB_CLIENT_ID || "demo-client-id",
@@ -12,10 +12,10 @@ export const wallets = [
       options: ["email", "google"],
     },
     smartAccount: {
-      chain: sepolia,
+      chain: avalancheFuji,
       sponsorGas: true,
     },
   }),
 ];
 
-export const chain = sepolia;
+export const chain = avalancheFuji;

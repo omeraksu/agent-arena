@@ -1,15 +1,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+import { getSupabase } from "./_lib/supabase";
+import { BoundedMap } from "./_lib/bounded-map";
 
 // In-memory fallback
-const nameRegistry = new Map<string, string>(); // address → username
-const nameToAddress = new Map<string, string>(); // username → address
+const nameRegistry = new BoundedMap<string, string>(500); // address → username
+const nameToAddress = new BoundedMap<string, string>(500); // username → address
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const supabase = getSupabase();
+
   // GET /api/names?address=0x... → resolve address to name
   // GET /api/names?name=kivanc → resolve name to address
   // GET /api/names?all=1 → get all mappings (for client cache)
@@ -20,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (all) {
       // Return all name mappings
       if (supabase) {
-        const { data } = await supabase.from("arena_names").select("address, username");
+        const { data } = await supabase.from("arena_names").select("address, username").limit(500);
         return res.json(data || []);
       }
       const entries = Array.from(nameRegistry.entries()).map(([addr, uname]) => ({

@@ -1,22 +1,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createWalletClient, http, parseEther } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
-import { createClient } from "@supabase/supabase-js";
+import { parseEther } from "viem";
+import { getSupabase } from "./_lib/supabase";
+import { getWalletClient } from "./_lib/viem";
+import { BoundedMap } from "./_lib/bounded-map";
 
 const FAUCET_AMOUNT = "0.005";
 const MAX_REQUESTS_PER_ADDRESS = 3;
-const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 // In-memory fallback for rate limiting
-const requestCounts = new Map<string, number>();
-
-function getSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
+const requestCounts = new BoundedMap<string, number>(200);
 
 async function getRequestCount(supabase: ReturnType<typeof getSupabase>, address: string): Promise<number> {
   if (supabase) {
@@ -84,12 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const account = privateKeyToAccount(privateKey as `0x${string}`);
-    const walletClient = createWalletClient({
-      account,
-      chain: sepolia,
-      transport: http(RPC_URL),
-    });
+    const walletClient = getWalletClient(privateKey);
 
     const txHash = await walletClient.sendTransaction({
       to: address as `0x${string}`,

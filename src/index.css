@@ -285,3 +285,28 @@ body::after {
 .quick-chip {
   animation: chipFadeIn 0.3s ease-out both;
 }
+
+/* ─── Signal Pulse Button ─── */
+
+@keyframes signalPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+  70% { box-shadow: 0 0 0 20px rgba(0, 212, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+}
+.signal-pulse-btn {
+  animation: signalPulse 2s infinite;
+}
+.signal-btn-cooldown {
+  opacity: 0.4;
+}
+
+/* ─── Lobby Countdown ─── */
+
+@keyframes countPulse {
+  0% { transform: scale(2); opacity: 0; }
+  30% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+.count-pulse {
+  animation: countPulse 1s ease-out both;
+}

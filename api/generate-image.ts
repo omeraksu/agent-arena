@@ -8,16 +8,9 @@
  * Both update nft_metadata_drafts.image_url and return public URL.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabase } from "./_lib/supabase";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-
-function getSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
 
 async function generateWithGemini(prompt: string): Promise<Buffer> {
   const apiKey = process.env.GEMINI_API_KEY;

@@ -4,8 +4,8 @@ import { useActiveAccount } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
 import { prepareTransaction, toWei, sendTransaction } from "thirdweb";
 import { client, wallets, chain } from "@/lib/thirdweb";
-import { requestMint, postActivity, resolveAddressToName, registerAgent, getAgentMessages, sendAgentMessage, type AgentMessage } from "@/lib/api";
-import { EXPLORER_TX_URL } from "@/config/constants";
+import { requestMint, postActivity, resolveAddressToName, registerAgent, getAgentMessages, sendAgentMessage, getUserProgress, type AgentMessage } from "@/lib/api";
+import { EXPLORER_TX_URL, ENERGY_MAX, ENERGY_QUIZ_BONUS, POST_MINT_QUIZ } from "@/config/constants";
 import { ARCHETYPES, DEFAULT_SLIDERS, type Archetype, type PersonalitySliders } from "@/config/archetypes";
 import MarkdownMessage from "./MarkdownMessage";
 
@@ -661,6 +661,7 @@ export default function AgentChat() {
   const [imageUploading, setImageUploading] = useState(false);
   const [specialMoveCard, setSpecialMoveCard] = useState<{ archetype: string; move: string; data: Record<string, unknown> } | null>(null);
   const [workshopMemory, setWorkshopMemory] = useState<{ sealed: boolean; skills: string[]; summary: string; message: string } | null>(null);
+  const [walletReady, setWalletReady] = useState(false);
 
   // ─── Feature 2: Tool progress state ───
   const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -676,6 +677,24 @@ export default function AgentChat() {
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
   const [replySent, setReplySent] = useState<string | null>(null);
+
+  // ─── Energy / Recharge system ───
+  const [energy, setEnergy] = useState(ENERGY_MAX);
+  const [showRechargeQuiz, setShowRechargeQuiz] = useState(false);
+  const [rechargeQ, setRechargeQ] = useState(0);
+  const [rechargeScore, setRechargeScore] = useState(0);
+  const [rechargeSelected, setRechargeSelected] = useState<number | null>(null);
+
+  // ─── Post-Mint Quiz state ───
+  const [showPostMintQuiz, setShowPostMintQuiz] = useState(false);
+  const [postMintQuiz, setPostMintQuiz] = useState<(typeof POST_MINT_QUIZ)[number] | null>(null);
+  const [postMintAnswer, setPostMintAnswer] = useState<number | null>(null);
+
+  const RECHARGE_QUESTIONS = [
+    { q: "Blockchain'in en temel ozelligi nedir?", opts: ["Hizli olması", "Verilerin degistirilemez olmasi", "Ucuz olmasi", "Gizli olmasi"], correct: 1 },
+    { q: "Gas ucreti nedir?", opts: ["Internet ucreti", "Ag kullanim bedeli", "Telefon faturasi", "Elektrik faturasi"], correct: 1 },
+    { q: "NFT 'non-fungible' ne demek?", opts: ["Ucuz", "Kopyalanamaz", "Benzersiz ve degistirilemez", "Dijital"], correct: 2 },
+  ];
 
   // sendTransaction directly — no modal, no useSendTransaction hook
 
@@ -704,11 +723,16 @@ export default function AgentChat() {
     },
     initialMessages: [],
     onError: (err) => {
-      const msg = err.message.includes("429")
-        ? "Mesaj limitine ulaştın! Biraz bekle."
-        : "Bir hata oluştu. Tekrar dene.";
-      setChatError(msg);
+      if (err.message.includes("429")) {
+        setEnergy(0);
+        setChatError("Enerji bitti! Quiz cozerek yeniden sarj et.");
+      } else {
+        setChatError("Bir hata olustu. Tekrar dene.");
+      }
       setTimeout(() => setChatError(null), 5000);
+    },
+    onFinish: () => {
+      setEnergy((prev) => Math.max(0, prev - 1));
     },
   });
 
@@ -747,6 +771,10 @@ export default function AgentChat() {
           if (result?.success) {
             setMintTxHash(result.txHash || "");
             setMintStatus("done");
+            // Trigger post-mint quiz
+            const randomQ = POST_MINT_QUIZ[Math.floor(Math.random() * POST_MINT_QUIZ.length)];
+            setPostMintQuiz(randomQ);
+            setTimeout(() => setShowPostMintQuiz(true), 1500);
           } else {
             setMintStatus("error");
           }
@@ -859,6 +887,14 @@ export default function AgentChat() {
     }
   }, [isLoading]);
 
+  // Gate: check wallet_created progress
+  useEffect(() => {
+    if (!account?.address) { setWalletReady(false); return; }
+    getUserProgress(account.address).then((types) => {
+      setWalletReady(types.includes("wallet_created"));
+    });
+  }, [account?.address]);
+
   // On mount: check localStorage for saved config
   useEffect(() => {
     const saved = localStorage.getItem("arena_agent_config");
@@ -921,7 +957,7 @@ export default function AgentChat() {
     if (step !== 5 || !archetype) return;
     async function loadHistory() {
       try {
-        const res = await fetch(`/api/chat-history?id=${sessionId}`);
+        const res = await fetch(`/api/agents?chat_session=${sessionId}`);
         const data = await res.json();
         if (data?.messages?.length > 0) {
           setMessages(data.messages);
@@ -953,10 +989,12 @@ export default function AgentChat() {
   const saveSession = useCallback(async () => {
     if (!archetype || messages.length === 0) return;
     try {
-      await fetch(`/api/chat-history?id=${sessionId}`, {
+      await fetch(`/api/agents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "save_chat_session",
+          session_id: sessionId,
           archetype: archetype.id,
           sliders,
           agentName,
@@ -1027,7 +1065,7 @@ export default function AgentChat() {
       console.warn("[arena] handleConfirmTransfer skipped — missing intent or account", { transferIntent, address: account?.address });
       return;
     }
-    console.log("[arena] executing transfer:", transferIntent.amount, "ETH →", transferIntent.toName, transferIntent.to);
+    console.log("[arena] executing transfer:", transferIntent.amount, "AVAX →", transferIntent.toName, transferIntent.to);
     setTransferStatus("sending");
     try {
       const tx = prepareTransaction({
@@ -1142,6 +1180,19 @@ export default function AgentChat() {
     );
   }
 
+  if (!walletReady) {
+    return (
+      <div className="mx-auto max-w-lg text-center space-y-4 py-12">
+        <h2 className="font-mono-data text-xl font-bold text-[var(--neon-purple)] tracking-wider">AGENT_CHAT</h2>
+        <p className="font-mono-data text-sm text-gray-500">{">"} wallet_setup_required</p>
+        <p className="text-sm text-gray-400">Agent olusturmak icin once cuzdan adimini tamamla</p>
+        <a href="/wallet" className="inline-block cyber-btn px-6 py-2 text-xs text-[var(--neon-blue)] border-[var(--neon-blue)]/30 hover:bg-[var(--neon-blue)]/10">
+          WALLET_MODULE →
+        </a>
+      </div>
+    );
+  }
+
   if (step === 0) {
     return <GhostAwakening onComplete={() => setStep(1)} />;
   }
@@ -1204,6 +1255,23 @@ export default function AgentChat() {
           {agentName}
         </h1>
         <span className="font-mono-data text-[10px] text-gray-600">// {archetype.tag}</span>
+
+        {/* Energy bar */}
+        <div className="flex items-center gap-1.5 ml-4">
+          <span className="font-mono-data text-[10px]" style={{ color: energy > 20 ? "var(--neon-green)" : energy > 10 ? "var(--neon-yellow)" : "#ef4444" }}>
+            E:{energy}
+          </span>
+          <div className="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${(energy / ENERGY_MAX) * 100}%`,
+                backgroundColor: energy > 20 ? "var(--neon-green)" : energy > 10 ? "var(--neon-yellow)" : "#ef4444",
+              }}
+            />
+          </div>
+        </div>
+
         <div className="ml-auto flex items-center gap-3">
           <SliderMini sliders={sliders} archetype={archetype} onChange={setSliders} />
           <button
@@ -1343,7 +1411,7 @@ export default function AgentChat() {
           <div className="cyber-card glow-blue p-4 space-y-2">
             <p className="font-mono-data text-sm text-[var(--neon-blue)] animate-pulse">{">"} transfer_hazırlanıyor...</p>
             <div className="font-mono-data text-xs text-gray-400">
-              {transferIntent.amount} ETH → {transferIntent.toName}.arena
+              {transferIntent.amount} AVAX → {transferIntent.toName}.arena
             </div>
             <button
               onClick={handleConfirmTransfer}
@@ -1364,7 +1432,7 @@ export default function AgentChat() {
           <div className="cyber-card glow-green p-4 text-center">
             <p className="font-mono-data text-sm font-bold text-[var(--neon-green)]">[TRANSFER_SENT]</p>
             <p className="font-mono-data text-xs text-gray-400 mt-1">
-              {transferIntent?.amount} ETH → {transferIntent?.toName}.arena
+              {transferIntent?.amount} AVAX → {transferIntent?.toName}.arena
             </p>
             {transferTxHash && (
               <a
@@ -1402,7 +1470,7 @@ export default function AgentChat() {
         {agentFaucetStatus === "done" && (
           <div className="cyber-card glow-green p-4 text-center">
             <p className="font-mono-data text-sm font-bold text-[var(--neon-green)]">[FAUCET_RECEIVED]</p>
-            <p className="font-mono-data text-xs text-gray-400 mt-1">0.005 test ETH alındı!</p>
+            <p className="font-mono-data text-xs text-gray-400 mt-1">0.005 test AVAX alındı!</p>
             {agentFaucetTxHash && (
               <a
                 href={`${EXPLORER_TX_URL}${agentFaucetTxHash}`}
@@ -1421,7 +1489,7 @@ export default function AgentChat() {
           <div className="cyber-card glow-blue p-4 text-center">
             <p className="font-mono-data text-[10px] text-gray-500 mb-1">BALANCE</p>
             <p className="font-mono-data text-2xl font-bold text-[var(--neon-blue)]">
-              {parseFloat(agentBalance).toFixed(4)} <span className="text-sm text-gray-500">ETH</span>
+              {parseFloat(agentBalance).toFixed(4)} <span className="text-sm text-gray-500">AVAX</span>
             </p>
           </div>
         )}
@@ -1680,24 +1748,152 @@ export default function AgentChat() {
         </div>
       )}
 
+      {/* Recharge Quiz Modal */}
+      {showPostMintQuiz && postMintQuiz && (
+        <div className="mt-3 cyber-card p-4 space-y-3 border-[var(--neon-green)]/30">
+          <div className="flex items-center justify-between">
+            <span className="font-mono-data text-sm font-bold text-[var(--neon-green)]">POST_MINT_QUIZ</span>
+            <span className="font-mono-data text-[10px] text-gray-500">+100 XP</span>
+          </div>
+          <p className="text-sm text-gray-300">{postMintQuiz.question}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {postMintQuiz.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (postMintAnswer !== null) return;
+                  setPostMintAnswer(i);
+                  // Post quiz_completed activity event
+                  if (account?.address) {
+                    postActivity({
+                      type: "quiz_completed",
+                      address: account.address,
+                      data: { correct: String(i === postMintQuiz.correctIndex) },
+                    });
+                  }
+                }}
+                className={`cyber-btn px-3 py-2 font-mono-data text-xs text-left transition-all ${
+                  postMintAnswer === null
+                    ? "text-gray-300 border-gray-700 hover:border-[var(--neon-green)]"
+                    : i === postMintQuiz.correctIndex
+                      ? "text-[var(--neon-green)] border-[var(--neon-green)]"
+                      : postMintAnswer === i
+                        ? "text-red-400 border-red-500"
+                        : "text-gray-600 border-gray-800"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+          {postMintAnswer !== null && (
+            <div className="space-y-2">
+              <p className={`font-mono-data text-xs ${
+                postMintAnswer === postMintQuiz.correctIndex ? "text-[var(--neon-green)]" : "text-amber-400"
+              }`}>
+                {postMintAnswer === postMintQuiz.correctIndex ? "Dogru!" : "Yanlis — ama ogrendin!"}
+              </p>
+              <p className="font-mono-data text-[10px] text-gray-400">{postMintQuiz.explanation}</p>
+              <button
+                onClick={() => {
+                  setShowPostMintQuiz(false);
+                  setPostMintQuiz(null);
+                  setPostMintAnswer(null);
+                }}
+                className="cyber-btn w-full py-1.5 text-xs text-[var(--neon-green)] border-[var(--neon-green)]/30 hover:bg-[var(--neon-green)]/10"
+              >
+                DEVAM_ET
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showRechargeQuiz && (
+        <div className="mt-3 cyber-card p-4 space-y-3 border-yellow-500/30">
+          <div className="flex items-center justify-between">
+            <span className="font-mono-data text-sm font-bold text-[var(--neon-yellow)]">RECHARGE_QUIZ [{rechargeQ + 1}/3]</span>
+            <span className="font-mono-data text-[10px] text-gray-500">+{ENERGY_QUIZ_BONUS} enerji</span>
+          </div>
+          <p className="text-sm text-gray-300">{RECHARGE_QUESTIONS[rechargeQ].q}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {RECHARGE_QUESTIONS[rechargeQ].opts.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (rechargeSelected !== null) return;
+                  setRechargeSelected(i);
+                  if (i === RECHARGE_QUESTIONS[rechargeQ].correct) {
+                    setRechargeScore((s) => s + 1);
+                  }
+                  setTimeout(() => {
+                    if (rechargeQ + 1 >= RECHARGE_QUESTIONS.length) {
+                      // Quiz done — recharge
+                      fetch("/api/agent", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ sessionId, recharge: true }),
+                      }).then((res) => res.json()).then((data) => {
+                        if (data.energyRemaining != null) setEnergy(data.energyRemaining);
+                        else setEnergy((prev) => prev + ENERGY_QUIZ_BONUS);
+                      }).catch(() => setEnergy((prev) => prev + ENERGY_QUIZ_BONUS));
+                      setShowRechargeQuiz(false);
+                      setRechargeQ(0);
+                      setRechargeScore(0);
+                      setRechargeSelected(null);
+                    } else {
+                      setRechargeQ((q) => q + 1);
+                      setRechargeSelected(null);
+                    }
+                  }, 800);
+                }}
+                className={`cyber-btn px-3 py-2 font-mono-data text-xs text-left transition-all ${
+                  rechargeSelected === null
+                    ? "text-gray-300 border-gray-700 hover:border-[var(--neon-yellow)]"
+                    : i === RECHARGE_QUESTIONS[rechargeQ].correct
+                      ? "text-[var(--neon-green)] border-[var(--neon-green)]"
+                      : rechargeSelected === i
+                        ? "text-red-400 border-red-500"
+                        : "text-gray-600 border-gray-800"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
-      <form onSubmit={(e) => { setChipsVisible(false); handleSubmit(e); }} className="mt-3 flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => { handleInputChange(e); if (e.target.value.trim()) setChipsVisible(false); }}
-          placeholder="> mesaj\u0131n\u0131 yaz..."
-          className="cyber-input flex-1 px-4 py-3 text-white font-mono-data text-sm"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="cyber-btn px-6 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(191,95,255,0.3)] disabled:opacity-50"
-          style={{ backgroundColor: archetype.color }}
-        >
-          SEND
-        </button>
-      </form>
+      {energy <= 0 && !showRechargeQuiz ? (
+        <div className="mt-3 flex gap-2 items-center">
+          <span className="font-mono-data text-xs text-red-400 flex-1">Enerji bitti!</span>
+          <button
+            onClick={() => { setShowRechargeQuiz(true); setRechargeQ(0); setRechargeScore(0); setRechargeSelected(null); }}
+            className="cyber-btn px-6 py-3 font-mono-data text-sm font-bold text-black bg-[var(--neon-yellow)] hover:shadow-[0_0_20px_rgba(255,234,0,0.3)] animate-pulse"
+          >
+            RECHARGE
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={(e) => { setChipsVisible(false); handleSubmit(e); }} className="mt-3 flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => { handleInputChange(e); if (e.target.value.trim()) setChipsVisible(false); }}
+            placeholder="> mesajini yaz..."
+            className="cyber-input flex-1 px-4 py-3 text-white font-mono-data text-sm"
+            disabled={isLoading || showRechargeQuiz}
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim() || showRechargeQuiz}
+            className="cyber-btn px-6 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(191,95,255,0.3)] disabled:opacity-50"
+            style={{ backgroundColor: archetype.color }}
+          >
+            SEND
+          </button>
+        </form>
+      )}
     </div>
   );
 }

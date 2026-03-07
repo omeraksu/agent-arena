@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
 import { client, wallets, chain } from "@/lib/thirdweb";
-import { getActivity, getNftsByAddress, type ActivityEvent, type NftRecord } from "@/lib/api";
+import { getActivity, getNftsByAddress, generateRecap, type ActivityEvent, type NftRecord, type OracleRecap } from "@/lib/api";
 import { EXPLORER_TX_URL, EXPLORER_ADDRESS_URL } from "@/config/constants";
 
 function shortenAddr(addr: string) {
@@ -14,13 +14,20 @@ export default function ProfilePage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [nfts, setNfts] = useState<NftRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recap, setRecap] = useState<OracleRecap | null>(null);
+  const [recapLoading, setRecapLoading] = useState(false);
+  const [recapError, setRecapError] = useState<string | null>(null);
+  const [workshopEnded, setWorkshopEnded] = useState(false);
 
   useEffect(() => {
     if (!account) return;
     Promise.all([
-      getActivity().then((all) =>
-        all.filter((e) => e.address.toLowerCase() === account.address.toLowerCase())
-      ),
+      getActivity().then((all) => {
+        if (all.some((e) => e.type === "workshop_ended")) {
+          setWorkshopEnded(true);
+        }
+        return all.filter((e) => e.address.toLowerCase() === account.address.toLowerCase());
+      }),
       getNftsByAddress(account.address),
     ])
       .then(([mine, nftData]) => {
@@ -29,6 +36,18 @@ export default function ProfilePage() {
       })
       .finally(() => setLoading(false));
   }, [account]);
+
+  // Poll for workshop_ended
+  useEffect(() => {
+    if (workshopEnded) return;
+    const interval = setInterval(async () => {
+      const all = await getActivity();
+      if (all.some((e) => e.type === "workshop_ended")) {
+        setWorkshopEnded(true);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [workshopEnded]);
 
   if (!account) {
     return (
@@ -166,6 +185,69 @@ export default function ProfilePage() {
             <p className="font-mono-data text-[9px] text-gray-600 mt-1">{stat.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Oracle's Recap */}
+      <div className="cyber-card p-4 space-y-3" style={{ borderColor: "rgba(168,85,247,0.2)" }}>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon-purple)]" />
+          <h2 className="font-mono-data text-sm font-bold text-[var(--neon-purple)]">ORACLE_ANALYSIS</h2>
+        </div>
+
+        {recap ? (
+          <div className="space-y-3">
+            <div className="text-center">
+              <span className="text-3xl">{recap.emoji}</span>
+              <p className="font-mono-data text-lg font-bold text-[var(--neon-purple)] mt-1">{recap.title}</p>
+            </div>
+            <p className="font-mono-data text-xs text-gray-300 text-center leading-relaxed">{recap.description}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {recap.traits.map((trait) => (
+                <span
+                  key={trait}
+                  className="font-mono-data text-[10px] px-2 py-0.5 rounded border border-[var(--neon-purple)]/30 text-[var(--neon-purple)] bg-[var(--neon-purple)]/5"
+                >
+                  {trait}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center space-y-2">
+            <p className="font-mono-data text-[10px] text-gray-500">
+              {workshopEnded
+                ? "Oracle, workshop aktivitelerini analiz edip sana ozel bir karakter karti olusturur."
+                : "Egitmen workshop'u bitirince Oracle aktif olacak."}
+            </p>
+            {recapError && (
+              <p className="font-mono-data text-[10px] text-red-400">{recapError}</p>
+            )}
+            <button
+              onClick={async () => {
+                if (!account) return;
+                setRecapLoading(true);
+                setRecapError(null);
+                const result = await generateRecap(account.address);
+                setRecapLoading(false);
+                if (result.recap) {
+                  setRecap(result.recap);
+                } else {
+                  setRecapError(result.error || "Analiz olusturulamadi");
+                }
+              }}
+              disabled={recapLoading || !workshopEnded}
+              className="cyber-btn px-4 py-2 font-mono-data text-xs font-bold text-[var(--neon-purple)] border-[var(--neon-purple)]/30 hover:bg-[var(--neon-purple)]/10 disabled:opacity-50"
+            >
+              {recapLoading ? (
+                <span className="animate-pulse">Oracle dusunuyor...</span>
+              ) : !workshopEnded ? (
+                "BEKLENIYOR..."
+              ) : (
+                "ANALIZ_ISTE"
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* TX history */}

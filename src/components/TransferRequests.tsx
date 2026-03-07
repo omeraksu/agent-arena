@@ -157,7 +157,7 @@ export default function TransferRequests() {
                     <div className="font-mono-data text-xs">
                       <span className="text-[var(--neon-blue)]">{displayFrom}</span>
                       <span className="text-gray-500"> senden </span>
-                      <span className="text-[var(--neon-green)] font-bold">{req.amount} ETH</span>
+                      <span className="text-[var(--neon-green)] font-bold">{req.amount} AVAX</span>
                       <span className="text-gray-500"> istiyor</span>
                     </div>
                     {req.message && (

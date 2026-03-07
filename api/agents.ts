@@ -8,18 +8,11 @@
  * Supabase varsa kullanır, hata olursa (tablo yok vs.) in-memory fallback.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabase } from "./_lib/supabase";
 
-function getSupabase() {
-  const url =
-    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key =
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY ||
-    "";
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
+// ─── Chat Session Store (merged from chat-history.ts) ──────────────────
+const chatSessions = new Map<string, { archetype: string; sliders: object; messages: object[] }>();
 
 // ─── In-Memory Stores ──────────────────────────────────────────────────
 
@@ -49,12 +42,33 @@ const MAX_MESSAGES = 200;
 
 // ─── Supabase helpers with fallback ────────────────────────────────────
 
+async function getLastResetTime(supabase: SupabaseClient): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("activity_events")
+      .select("created_at")
+      .eq("type", "session_reset")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    return data?.created_at || null;
+  } catch {
+    return null;
+  }
+}
+
 async function getAgentsFromDB(supabase: SupabaseClient): Promise<AgentRecord[] | null> {
   try {
-    const { data, error } = await supabase
+    const resetTime = await getLastResetTime(supabase);
+    let query = supabase
       .from("agent_registry")
       .select("*")
-      .order("last_seen", { ascending: false });
+      .order("last_seen", { ascending: false })
+      .limit(200);
+    if (resetTime) {
+      query = query.gt("last_seen", resetTime);
+    }
+    const { data, error } = await query;
     if (error) return null;
     return data || [];
   } catch {
@@ -108,8 +122,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const supabase = getSupabase();
 
-  // ─── GET: List agents or get messages ──────────────────────────────
+  // ─── GET: Chat history, list agents, or get messages ───────────────
   if (req.method === "GET") {
+    // Chat session load (merged from chat-history.ts)
+    const chatSessionId = req.query.chat_session as string | undefined;
+    if (chatSessionId) {
+      if (supabase) {
+        const { data } = await supabase
+          .from("chat_sessions")
+          .select("*")
+          .eq("id", chatSessionId)
+          .single();
+        return res.status(200).json(data || null);
+      }
+      return res.status(200).json(chatSessions.get(chatSessionId) || null);
+    }
+
     const messagesFor = req.query.messages as string | undefined;
 
     // Get messages for a specific agent
@@ -142,9 +170,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ agents });
   }
 
-  // ─── POST: Register agent or send message ──────────────────────────
+  // ─── POST: Chat session save, register agent, or send message ──────
   if (req.method === "POST") {
     const { action } = req.body;
+
+    // Chat session save (merged from chat-history.ts)
+    if (action === "save_chat_session") {
+      const { session_id, archetype, sliders, messages } = req.body;
+      if (!session_id) return res.status(400).json({ error: "session_id gerekli" });
+      const trimmed = (messages || []).slice(-10);
+      if (supabase) {
+        const { error } = await supabase
+          .from("chat_sessions")
+          .upsert({ id: session_id, archetype, sliders, messages: trimmed, updated_at: new Date().toISOString() });
+        if (error) return res.status(500).json({ error: error.message });
+      } else {
+        chatSessions.set(session_id, { archetype, sliders, messages: trimmed });
+      }
+      return res.status(200).json({ ok: true });
+    }
 
     // Send message to another agent
     if (action === "message") {

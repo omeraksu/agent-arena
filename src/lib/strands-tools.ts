@@ -69,10 +69,10 @@ export function createTools(ctx: ToolContext) {
   const request_transfer = tool({
     name: "request_transfer",
     description:
-      "Başka bir öğrenciden ETH transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.",
+      "Başka bir öğrenciden AVAX transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.",
     inputSchema: z.object({
       targetName: z.string().describe("Hedef kişinin .arena ismi (ör: numan)"),
-      amount: z.string().describe("İstenen ETH miktarı (ör: 0.01)"),
+      amount: z.string().describe("İstenen AVAX miktarı (ör: 0.01)"),
       reason: z.string().describe("İsteğin sebebi"),
     }),
     callback: async (input): Promise<JSONValue> => {
@@ -124,7 +124,7 @@ export function createTools(ctx: ToolContext) {
 
       return {
         success: true,
-        message: `${input.targetName}'a ${input.amount} ETH isteği gönderildi`,
+        message: `${input.targetName}'a ${input.amount} AVAX isteği gönderildi`,
       };
     },
   });

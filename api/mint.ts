@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createWalletClient, createPublicClient, http, encodeFunctionData } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { sepolia } from "viem/chains";
-import { createClient } from "@supabase/supabase-js";
+import { encodeFunctionData } from "viem";
+import { getSupabase } from "./_lib/supabase";
+import { publicClient, getWalletClient } from "./_lib/viem";
 
 const WORKSHOP_NFT_ABI = [
   {
@@ -21,17 +20,10 @@ const WORKSHOP_NFT_ABI = [
   },
 ] as const;
 
-const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
-function getSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function saveNftMetadata(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tokenId: number,
   address: string,
   opts: {
@@ -81,6 +73,24 @@ async function saveNftMetadata(
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // ─── GET: List NFTs by address (merged from nfts.ts) ───
+  if (req.method === "GET") {
+    const address = req.query.address as string;
+    if (!address) {
+      return res.status(400).json({ error: "address query param required" });
+    }
+    const sb = getSupabase();
+    if (!sb) return res.status(200).json([]);
+    const { data, error } = await sb
+      .from("nft_metadata")
+      .select("*")
+      .eq("address", address.toLowerCase())
+      .order("token_id", { ascending: true })
+      .limit(100);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json(data || []);
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -151,18 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Real on-chain mint ───
   try {
-    const account = privateKeyToAccount(privateKey as `0x${string}`);
-
-    const walletClient = createWalletClient({
-      account,
-      chain: sepolia,
-      transport: http(RPC_URL),
-    });
-
-    const publicClient = createPublicClient({
-      chain: sepolia,
-      transport: http(RPC_URL),
-    });
+    const walletClient = getWalletClient(privateKey);
 
     // Get current totalSupply as the next tokenId
     const totalSupply = await publicClient.readContract({
