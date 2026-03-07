@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { ConnectButton, useActiveAccount, useWalletBalance } from "thirdweb/react";
 import { client, wallets, chain } from "@/lib/thirdweb";
-import { requestFaucet, postActivity, registerName, resolveAddressToName } from "@/lib/api";
+import { requestFaucet, postActivity, registerName } from "@/lib/api";
 import { EXPLORER_ADDRESS_URL } from "@/config/constants";
+import { useArena } from "@/contexts/ArenaContext";
 import TransferForm from "./TransferForm";
 
 function shortenAddress(addr: string) {
@@ -537,6 +538,7 @@ function generateSuggestions(count = 4): string[] {
 
 export default function WalletModule() {
   const account = useActiveAccount();
+  const { userName: arenaName, setUserName: setArenaNameCtx, addCompletedType } = useArena();
   const { data: balance, isLoading: balanceLoading } = useWalletBalance({
     client,
     chain,
@@ -552,8 +554,7 @@ export default function WalletModule() {
   const [transferDone, setTransferDone] = useState(false);
   const [achievement, setAchievement] = useState<string | null>(null);
 
-  // Arena Name state
-  const [arenaName, setArenaName] = useState<string | null>(null);
+  // Arena Name state (read from context, input local)
   const [nameInput, setNameInput] = useState("");
   const [nameError, setNameError] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
@@ -565,17 +566,11 @@ export default function WalletModule() {
 
   const hasBalance = Number(balance?.displayValue || 0) > 0;
 
-  // Check if user already has a name — skip name step if so
+  // If context already has a name → skip name step, unlock up to faucet
   useEffect(() => {
-    if (account && !arenaName) {
-      resolveAddressToName(account.address).then((name) => {
-        if (name) {
-          setArenaName(name);
-          // Already has name → skip name step, unlock up to faucet
-          setUnlockedStep((prev) => Math.max(prev, 3));
-          setStep((prev) => (prev <= 2 ? 3 : prev));
-        }
-      });
+    if (account && arenaName) {
+      setUnlockedStep((prev) => Math.max(prev, 3));
+      setStep((prev) => (prev <= 2 ? 3 : prev));
     }
   }, [account, arenaName]);
 
@@ -583,6 +578,7 @@ export default function WalletModule() {
   useEffect(() => {
     if (account && step === 1) {
       showAchievement("Dijital Kimlik Oluşturuldu!");
+      addCompletedType("wallet_created");
       setTimeout(() => {
         setStep(2);
         setUnlockedStep((prev) => Math.max(prev, 2));
@@ -593,7 +589,7 @@ export default function WalletModule() {
         data: {},
       });
     }
-  }, [account, step, showAchievement]);
+  }, [account, step, showAchievement, addCompletedType]);
 
   // Auto-unlock step 4 (transfer) if wallet already has balance
   useEffect(() => {
@@ -615,7 +611,8 @@ export default function WalletModule() {
     try {
       const res = await registerName(account.address, clean);
       if (res.ok) {
-        setArenaName(clean);
+        setArenaNameCtx(clean);
+        addCompletedType("wallet_created");
         setStep(3);
         setUnlockedStep((prev) => Math.max(prev, 3));
         showAchievement(`${clean}.arena — İsmin Kayıt Edildi!`);
@@ -639,6 +636,7 @@ export default function WalletModule() {
         setFaucetMsg("Test AVAX gönderildi!");
         setFaucetUsed(true);
         setUnlockedStep((prev) => Math.max(prev, 4));
+        addCompletedType("faucet");
         showAchievement("Test AVAX Alındı — Enerji Yüklendi!");
         await postActivity({
           type: "faucet",

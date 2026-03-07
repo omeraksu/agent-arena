@@ -9,7 +9,8 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
+import { getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 // ─── Chat Session Store (merged from chat-history.ts) ──────────────────
 const chatSessions = new Map<string, { archetype: string; sliders: object; messages: object[] }>();
@@ -42,24 +43,9 @@ const MAX_MESSAGES = 200;
 
 // ─── Supabase helpers with fallback ────────────────────────────────────
 
-async function getLastResetTime(supabase: SupabaseClient): Promise<string | null> {
-  try {
-    const { data } = await supabase
-      .from("activity_events")
-      .select("created_at")
-      .eq("type", "session_reset")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    return data?.created_at || null;
-  } catch {
-    return null;
-  }
-}
-
 async function getAgentsFromDB(supabase: SupabaseClient): Promise<AgentRecord[] | null> {
   try {
-    const resetTime = await getLastResetTime(supabase);
+    const resetTime = await getSessionResetTime(supabase);
     let query = supabase
       .from("agent_registry")
       .select("*")

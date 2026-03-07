@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
 
 interface TransferRequest {
   id: string;

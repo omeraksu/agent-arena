@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
+import { getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 // Fallback in-memory store when Supabase is not configured
 const inMemoryEvents: Array<{
@@ -11,27 +11,12 @@ const inMemoryEvents: Array<{
   created_at: string;
 }> = [];
 
-async function getLastResetTime(supabase: SupabaseClient): Promise<string | null> {
-  try {
-    const { data } = await supabase
-      .from("activity_events")
-      .select("created_at")
-      .eq("type", "session_reset")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    return data?.created_at || null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = getSupabase();
 
   if (req.method === "GET") {
-    // Resolve session boundary once per GET request
-    const resetTime = supabase ? await getLastResetTime(supabase) : null;
+    // Resolve session boundary once per GET request (cached)
+    const resetTime = await getSessionResetTime(supabase);
 
     // Squad stats endpoint
     if (req.query.stats === "squad") {

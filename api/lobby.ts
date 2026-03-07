@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
+import { getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 // ─── Types ───
 
@@ -38,28 +39,30 @@ function generateCode(): string {
 async function initFromDB(supabase: ReturnType<typeof getSupabase>) {
   if (initialized || !supabase) return;
   try {
-    // Check for session_reset — only consider events after the last reset
-    let resetTime: string | null = null;
-    const { data: resetData } = await supabase
-      .from("activity_events")
-      .select("created_at")
-      .eq("type", "session_reset")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    resetTime = resetData?.created_at || null;
+    const resetTime = await getSessionResetTime(supabase);
 
-    // Look for workshop_started event first
-    let startQuery = supabase
-      .from("activity_events")
-      .select("data, created_at")
-      .eq("type", "workshop_started")
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (resetTime) startQuery = startQuery.gt("created_at", resetTime);
-    const { data: startEvents } = await startQuery;
+    // Run remaining two queries in parallel
+    const [startResult, createResult] = await Promise.all([
+      supabase
+        .from("activity_events")
+        .select("data, created_at")
+        .eq("type", "workshop_started")
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("activity_events")
+        .select("data, created_at")
+        .eq("type", "workshop_created")
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
 
-    if (startEvents && startEvents.length > 0) {
+    // Filter results by resetTime
+    const startEvents = resetTime
+      ? (startResult.data || []).filter((e) => e.created_at > resetTime)
+      : startResult.data || [];
+
+    if (startEvents.length > 0) {
       const startData = startEvents[0].data as Record<string, string>;
       session = {
         code: startData.code || "??????",
@@ -96,16 +99,11 @@ async function initFromDB(supabase: ReturnType<typeof getSupabase>) {
     }
 
     // Look for workshop_created event (workshop created but not yet started)
-    let createQuery = supabase
-      .from("activity_events")
-      .select("data, created_at")
-      .eq("type", "workshop_created")
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (resetTime) createQuery = createQuery.gt("created_at", resetTime);
-    const { data: createEvents } = await createQuery;
+    const createEvents = resetTime
+      ? (createResult.data || []).filter((e) => e.created_at > resetTime)
+      : createResult.data || [];
 
-    if (createEvents && createEvents.length > 0) {
+    if (createEvents.length > 0) {
       const createData = createEvents[0].data as Record<string, string>;
       session = {
         code: createData.code || "??????",
@@ -245,9 +243,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           joinedAt: now,
         });
 
-        // Write lobby_joined event to Supabase
+        // Fire-and-forget: write lobby_joined event to Supabase (in-memory state already updated)
         if (supabase) {
-          await supabase.from("activity_events").insert({
+          supabase.from("activity_events").insert({
             id: crypto.randomUUID(),
             type: "lobby_joined",
             address: addrLower,
@@ -256,7 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               username: username || "",
             },
             created_at: new Date().toISOString(),
-          });
+          }).then(() => {}).catch(() => {});
         }
       }
 

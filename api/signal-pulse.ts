@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
-import { BoundedMap } from "./_lib/bounded-map";
+import { getSupabase } from "./_lib/supabase.js";
+import { BoundedMap } from "./_lib/bounded-map.js";
+import { getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 // In-memory state
 const signalRateLimit = new BoundedMap<string, number>(500);
@@ -90,15 +91,7 @@ function buildRoundResponse(now: number) {
 async function initFromDB(supabase: ReturnType<typeof getSupabase>) {
   if (initialized || !supabase) return;
   try {
-    let resetTime: string | null = null;
-    const { data: resetData } = await supabase
-      .from("activity_events")
-      .select("created_at")
-      .eq("type", "session_reset")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    resetTime = resetData?.created_at || null;
+    const resetTime = await getSessionResetTime(supabase);
 
     let query = supabase
       .from("activity_events")

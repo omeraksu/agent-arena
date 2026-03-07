@@ -89,3 +89,78 @@ export function slidersToPrompt(s: PersonalitySliders): string {
 
   return `${techStyle} ${toneStyle} ${detailStyle}`;
 }
+
+// ─── Mad-Libs Personality ───
+
+export interface MadLibsPersonality {
+  speechStyle: string;
+  curiosity: string;
+  vibe: string;
+  freeText: string;
+}
+
+export const MADLIBS_SUGGESTIONS = {
+  speechStyle: ["korsan gibi", "hacker gibi", "bilge bir usta gibi", "bilim insanı gibi", "bozuk robot gibi", "arkadaşın gibi"],
+  curiosity: ["hackleme ve kodlama", "felsefe ve sahiplik", "hazine avı ve macera", "deneyler ve veriler", "blockchain ve NFT"],
+  vibe: ["gizemli ve sıradışı", "enerjik ve heyecanlı", "sakin ve düşünceli", "keskin ve meydan okuyan", "eğlenceli ve komik"],
+};
+
+// ─── Capability Chips ───
+
+export interface CapabilityChip {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  color: string;
+  toolNames: string[];
+  defaultEnabled: boolean;
+}
+
+export const CAPABILITY_CHIPS: CapabilityChip[] = [
+  { id: "nft", label: "NFT Mint", description: "NFT oluştur ve mint et", icon: "💎", color: "var(--neon-yellow)", toolNames: ["mint_nft", "draft_nft_metadata", "generate_nft_image"], defaultEnabled: true },
+  { id: "transfer", label: "Transfer", description: "AVAX gönder ve iste", icon: "⚡", color: "var(--neon-blue)", toolNames: ["send_transfer", "request_transfer"], defaultEnabled: true },
+  { id: "faucet", label: "Faucet", description: "Test AVAX al", icon: "💧", color: "var(--neon-green)", toolNames: ["request_faucet"], defaultEnabled: true },
+  { id: "balance", label: "Bakiye", description: "Cüzdan bakiyesini kontrol et", icon: "👛", color: "var(--neon-green)", toolNames: ["check_balance"], defaultEnabled: true },
+  { id: "quiz", label: "Quiz", description: "Blockchain quiz'leri çöz", icon: "🧠", color: "var(--neon-purple)", toolNames: ["challenge_quiz"], defaultEnabled: true },
+  { id: "explorer", label: "Explorer", description: "İşlemleri incele", icon: "🔍", color: "var(--neon-blue)", toolNames: ["explore_tx"], defaultEnabled: false },
+  { id: "social", label: "Sosyal", description: "Diğer agentlarla iletişim", icon: "💬", color: "var(--neon-pink)", toolNames: ["message_agent", "discover_agents", "check_messages"], defaultEnabled: false },
+  { id: "memory", label: "Hafıza", description: "Workshop anılarını mühürle", icon: "🔒", color: "var(--neon-purple)", toolNames: ["seal_workshop_memory"], defaultEnabled: false },
+];
+
+export function resolveChipsToToolNames(chipIds: string[]): string[] {
+  const tools: string[] = [];
+  for (const id of chipIds) {
+    const chip = CAPABILITY_CHIPS.find((c) => c.id === id);
+    if (chip) tools.push(...chip.toolNames);
+  }
+  return tools;
+}
+
+export function getDefaultEnabledChips(): string[] {
+  return CAPABILITY_CHIPS.filter((c) => c.defaultEnabled).map((c) => c.id);
+}
+
+// ─── Derive archetype from personality text ───
+
+const KEYWORD_MAP: Record<string, string[]> = {
+  hacker: ["hacker", "hack", "kodlama", "kod", "sistem", "underground", "yeraltı"],
+  sage: ["bilge", "usta", "felsefe", "düşün", "derin", "sakin"],
+  pirate: ["korsan", "hazine", "macera", "deniz", "kaptan"],
+  scientist: ["bilim", "deney", "veri", "lab", "analiz", "bilim insanı"],
+  glitch: ["bozuk", "robot", "glitch", "gizemli", "sıradışı", "hata"],
+};
+
+export function deriveArchetypeFromPersonality(p: MadLibsPersonality): string {
+  const text = `${p.speechStyle} ${p.curiosity} ${p.vibe} ${p.freeText}`.toLowerCase();
+  let bestMatch = "hacker";
+  let bestScore = 0;
+  for (const [archId, keywords] of Object.entries(KEYWORD_MAP)) {
+    const score = keywords.filter((kw) => text.includes(kw)).length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = archId;
+    }
+  }
+  return bestMatch;
+}

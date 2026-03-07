@@ -4,9 +4,21 @@ import { useActiveAccount } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
 import { prepareTransaction, toWei, sendTransaction } from "thirdweb";
 import { client, wallets, chain } from "@/lib/thirdweb";
-import { requestMint, postActivity, resolveAddressToName, registerAgent, getAgentMessages, sendAgentMessage, getUserProgress, type AgentMessage } from "@/lib/api";
+import { requestMint, postActivity, registerAgent, getAgentMessages, sendAgentMessage, type AgentMessage } from "@/lib/api";
+import { useArena } from "@/contexts/ArenaContext";
 import { EXPLORER_TX_URL, ENERGY_MAX, ENERGY_QUIZ_BONUS, POST_MINT_QUIZ } from "@/config/constants";
-import { ARCHETYPES, DEFAULT_SLIDERS, type Archetype, type PersonalitySliders } from "@/config/archetypes";
+import {
+  ARCHETYPES,
+  DEFAULT_SLIDERS,
+  CAPABILITY_CHIPS,
+  MADLIBS_SUGGESTIONS,
+  getDefaultEnabledChips,
+  resolveChipsToToolNames,
+  deriveArchetypeFromPersonality,
+  type Archetype,
+  type PersonalitySliders,
+  type MadLibsPersonality,
+} from "@/config/archetypes";
 import MarkdownMessage from "./MarkdownMessage";
 
 // ─── Feature 2: Tool Progress Stages ───
@@ -151,17 +163,27 @@ function ToolProgressCard({
   );
 }
 
-interface AgentConfig {
+// v1 (legacy)
+interface AgentConfigV1 {
   name: string;
   archetypeId: string;
   sliders: PersonalitySliders;
+}
+
+// v2 (new)
+interface AgentConfig {
+  version: 2;
+  name: string;
+  personality: MadLibsPersonality;
+  enabledChips: string[];
+  derivedArchetypeId?: string;
 }
 
 const NAME_SUGGESTIONS = ["CIPHER", "NEXUS", "PHANTOM", "CORTEX", "ECHO", "VORTEX", "PRISM", "AXIOM"];
 
 // ─── Step Indicator (steps 1-3 only) ───
 function StepIndicator({ current }: { current: number }) {
-  const labels = ["IDENTITY", "PERSONALITY", "CALIBRATION"];
+  const labels = ["IDENTITY", "PERSONALITY", "CAPABILITIES"];
   return (
     <div className="flex justify-center gap-6 mb-8">
       {labels.map((label, i) => {
@@ -295,8 +317,95 @@ function AgentNaming({ onComplete }: { onComplete: (name: string) => void }) {
   );
 }
 
-// ─── Step 2: Archetype Selection ───
-function ArchetypeSelect({ onSelect }: { onSelect: (a: Archetype) => void }) {
+// ─── Step 2: Agent Personality (Mad-Libs) ───
+function AgentPersonality({
+  personality,
+  onChange,
+  onComplete,
+}: {
+  personality: MadLibsPersonality;
+  onChange: (p: MadLibsPersonality) => void;
+  onComplete: () => void;
+}) {
+  const fields: {
+    key: keyof MadLibsPersonality;
+    label: string;
+    placeholder: string;
+    suggestions: string[];
+    isTextarea?: boolean;
+  }[] = [
+    { key: "speechStyle", label: "KONUSMA_TARZI://", placeholder: "nas\u0131l konu\u015fsun?", suggestions: MADLIBS_SUGGESTIONS.speechStyle },
+    { key: "curiosity", label: "MERAK://", placeholder: "neye merakl\u0131?", suggestions: MADLIBS_SUGGESTIONS.curiosity },
+    { key: "vibe", label: "TARZI://", placeholder: "tarz\u0131 ne?", suggestions: MADLIBS_SUGGESTIONS.vibe },
+    { key: "freeText", label: "SERBEST_ALAN://", placeholder: "ekstra bir \u015fey eklemek istersen... (opsiyonel)", suggestions: [], isTextarea: true },
+  ];
+
+  const hasContent = personality.speechStyle || personality.curiosity || personality.vibe;
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <StepIndicator current={2} />
+
+      <div className="text-center">
+        <h2 className="font-mono-data text-xl font-bold text-[var(--neon-purple)] tracking-wider">
+          {">"} AGENT_PERSONALITY
+        </h2>
+        <p className="font-mono-data text-xs text-gray-500 mt-1">ajan\u0131n\u0131n ki\u015fili\u011fini tan\u0131mla</p>
+      </div>
+
+      <div className="cyber-card glow-purple p-6 space-y-5">
+        {fields.map(({ key, label, placeholder, suggestions, isTextarea }) => (
+          <div key={key}>
+            <label className="font-mono-data text-[10px] text-gray-500 block mb-2">{label}</label>
+            {isTextarea ? (
+              <textarea
+                value={personality[key]}
+                onChange={(e) => onChange({ ...personality, [key]: e.target.value })}
+                placeholder={placeholder}
+                className="cyber-input w-full px-4 py-3 text-[var(--neon-purple)] font-mono-data text-sm resize-none h-16"
+              />
+            ) : (
+              <input
+                value={personality[key]}
+                onChange={(e) => onChange({ ...personality, [key]: e.target.value })}
+                placeholder={placeholder}
+                className="cyber-input w-full px-4 py-3 text-[var(--neon-purple)] font-mono-data text-sm"
+              />
+            )}
+            {suggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => onChange({ ...personality, [key]: s })}
+                    className={`font-mono-data text-[10px] px-2.5 py-1 border transition-all ${
+                      personality[key] === s
+                        ? "border-[var(--neon-purple)] text-[var(--neon-purple)] bg-[rgba(191,95,255,0.1)]"
+                        : "border-gray-800 text-gray-500 hover:border-gray-600"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button
+          onClick={onComplete}
+          disabled={!hasContent}
+          className="cyber-btn w-full bg-[var(--neon-purple)] px-4 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(191,95,255,0.3)] disabled:opacity-30"
+        >
+          {">"} K\u0130\u015e\u0130L\u0130K TAMAM
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── (Legacy) Step 2: Archetype Selection ───
+function _ArchetypeSelect({ onSelect }: { onSelect: (a: Archetype) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
@@ -346,8 +455,90 @@ function ArchetypeSelect({ onSelect }: { onSelect: (a: Archetype) => void }) {
   );
 }
 
-// ─── Step 3: Prompt Architect ───
-function PromptArchitect({
+// ─── Step 3: Capability Chips ───
+function CapabilityChipsStep({
+  enabledChips,
+  onChange,
+  onComplete,
+}: {
+  enabledChips: string[];
+  onChange: (chips: string[]) => void;
+  onComplete: () => void;
+}) {
+  const [animatingChip, setAnimatingChip] = useState<string | null>(null);
+
+  function toggleChip(chipId: string) {
+    setAnimatingChip(chipId);
+    setTimeout(() => setAnimatingChip(null), 300);
+    if (enabledChips.includes(chipId)) {
+      onChange(enabledChips.filter((c) => c !== chipId));
+    } else {
+      onChange([...enabledChips, chipId]);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <StepIndicator current={3} />
+
+      <div className="text-center">
+        <h2 className="font-mono-data text-xl font-bold text-[var(--neon-green)] tracking-wider">
+          {">"} CAPABILITIES
+        </h2>
+        <p className="font-mono-data text-xs text-gray-500 mt-1">ajan\u0131n\u0131n yeteneklerini se\u00e7</p>
+      </div>
+
+      <div className="text-center font-mono-data text-sm">
+        <span className="text-[var(--neon-green)]">{enabledChips.length}</span>
+        <span className="text-gray-600">/{CAPABILITY_CHIPS.length} YETENEKLER\u0130 AKT\u0130F</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {CAPABILITY_CHIPS.map((chip) => {
+          const isOn = enabledChips.includes(chip.id);
+          const isAnimating = animatingChip === chip.id;
+          return (
+            <button
+              key={chip.id}
+              onClick={() => toggleChip(chip.id)}
+              className={`cyber-card p-4 text-left transition-all duration-200 ${isAnimating ? "chip-slot-in" : ""} ${
+                isOn ? "" : "opacity-40"
+              }`}
+              style={{
+                borderColor: isOn ? chip.color : "var(--border-dim)",
+                boxShadow: isOn ? `0 0 15px color-mix(in srgb, ${chip.color} 20%, transparent)` : "none",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">{chip.icon}</span>
+                <span
+                  className="font-mono-data text-xs font-bold"
+                  style={{ color: isOn ? chip.color : "#4a5568" }}
+                >
+                  {chip.label}
+                </span>
+                <span className="ml-auto font-mono-data text-[9px]" style={{ color: isOn ? chip.color : "#4a5568" }}>
+                  {isOn ? "ON" : "OFF"}
+                </span>
+              </div>
+              <p className="font-mono-data text-[10px] text-gray-600">{chip.description}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        onClick={onComplete}
+        className="cyber-btn w-full bg-[var(--neon-green)] px-4 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(0,255,170,0.3)]"
+      >
+        {">"} DERLE & Y\u00dcKLE
+      </button>
+    </div>
+  );
+}
+
+// ─── (Legacy) Step 3: Prompt Architect ───
+function _PromptArchitect({
   archetype,
   agentName,
   sliders,
@@ -475,29 +666,32 @@ function PromptArchitect({
 function CompileDeploy({
   agentName,
   archetype,
-  sliders,
+  personality,
+  enabledChipCount,
+  totalChipCount,
   onComplete,
 }: {
   agentName: string;
   archetype: Archetype;
-  sliders: PersonalitySliders;
+  personality: MadLibsPersonality;
+  enabledChipCount: number;
+  totalChipCount: number;
   onComplete: () => void;
 }) {
   const [visibleLines, setVisibleLines] = useState(0);
   const [progress, setProgress] = useState(0);
   const promptHash = useRef(`0x${crypto.randomUUID().slice(0, 8)}`);
 
-  const bar = (val: number) =>
-    "\u2588".repeat(Math.round(val / 10)) + "\u2591".repeat(10 - Math.round(val / 10));
+  const truncate = (s: string, len: number) => s.length > len ? s.slice(0, len) + "..." : s;
 
   const lines = [
     { text: "> COMPILING AGENT BINARY...", cls: "text-[var(--neon-green)] font-bold", delay: 600 },
     { text: "\u00A0", cls: "", delay: 300 },
-    { text: `  core_personality: ${archetype.name} ............ \u2713`, cls: "text-green-400", delay: 500 },
     { text: `  agent_name: ${agentName} ...................... \u2713`, cls: "text-green-400", delay: 400 },
-    { text: `  technical_level: ${bar(sliders.technical)} ${sliders.technical}% ... \u2713`, cls: "text-green-400", delay: 400 },
-    { text: `  tone_calibration: ${bar(sliders.tone)} ${sliders.tone}% .. \u2713`, cls: "text-green-400", delay: 400 },
-    { text: `  detail_density: ${bar(sliders.detail)} ${sliders.detail}% .... \u2713`, cls: "text-green-400", delay: 400 },
+    ...(personality.speechStyle ? [{ text: `  kisilik_cekirdegi: ${truncate(personality.speechStyle, 24)} .............. \u2713`, cls: "text-green-400", delay: 500 }] : []),
+    ...(personality.curiosity ? [{ text: `  merak_modulu: ${truncate(personality.curiosity, 24)} .................... \u2713`, cls: "text-green-400", delay: 400 }] : []),
+    ...(personality.vibe ? [{ text: `  tarzi_kalibrasyonu: ${truncate(personality.vibe, 24)} ................... \u2713`, cls: "text-green-400", delay: 400 }] : []),
+    { text: `  yetenekler: ${enabledChipCount}/${totalChipCount} yuklendi .................... \u2713`, cls: "text-green-400", delay: 400 },
     { text: `  prompt_hash: ${promptHash.current} ............. \u2713`, cls: "text-green-400", delay: 500 },
     { text: `  neural_weights: loaded ................. \u2713`, cls: "text-green-400", delay: 400 },
     { text: "\u00A0", cls: "", delay: 300 },
@@ -617,11 +811,15 @@ function SliderMini({
 // ─── Main Component ───
 export default function AgentChat() {
   const account = useActiveAccount();
+  const { userName, completedTypes, addCompletedType } = useArena();
+  const walletReady = completedTypes.includes("wallet_created");
   // Steps: -1=loading, 0=awaken, 1=name, 2=archetype, 3=calibrate, 4=compile, 5=chat
   const [step, setStep] = useState(-1);
   const [agentName, setAgentName] = useState("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [sliders, setSliders] = useState<PersonalitySliders>({ ...DEFAULT_SLIDERS });
+  const [personality, setPersonality] = useState<MadLibsPersonality>({ speechStyle: "", curiosity: "", vibe: "", freeText: "" });
+  const [enabledChips, setEnabledChips] = useState<string[]>(getDefaultEnabledChips());
   const [sessionId] = useState(() => {
     const stored = localStorage.getItem("arena_session_id");
     if (stored) return stored;
@@ -631,7 +829,6 @@ export default function AgentChat() {
   });
   const [mintStatus, setMintStatus] = useState<"idle" | "minting" | "done" | "error">("idle");
   const [mintTxHash, setMintTxHash] = useState("");
-  const [userName, setUserName] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [requestError, setRequestError] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -661,7 +858,6 @@ export default function AgentChat() {
   const [imageUploading, setImageUploading] = useState(false);
   const [specialMoveCard, setSpecialMoveCard] = useState<{ archetype: string; move: string; data: Record<string, unknown> } | null>(null);
   const [workshopMemory, setWorkshopMemory] = useState<{ sealed: boolean; skills: string[]; summary: string; message: string } | null>(null);
-  const [walletReady, setWalletReady] = useState(false);
 
   // ─── Feature 2: Tool progress state ───
   const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -698,14 +894,6 @@ export default function AgentChat() {
 
   // sendTransaction directly — no modal, no useSendTransaction hook
 
-  // Resolve user's arena name
-  useEffect(() => {
-    if (!account?.address) return;
-    resolveAddressToName(account.address).then((name) => {
-      if (name) setUserName(name);
-    });
-  }, [account?.address]);
-
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, data, append } = useChat({
     api: "/api/agent",
     body: {
@@ -715,6 +903,8 @@ export default function AgentChat() {
       agentName,
       userAddress: account?.address,
       userName,
+      personality,
+      enabledToolNames: resolveChipsToToolNames(enabledChips),
       pendingAgentMessages: incomingMessages.map((m) => ({
         from: m.from_agent,
         message: m.message,
@@ -887,25 +1077,41 @@ export default function AgentChat() {
     }
   }, [isLoading]);
 
-  // Gate: check wallet_created progress
-  useEffect(() => {
-    if (!account?.address) { setWalletReady(false); return; }
-    getUserProgress(account.address).then((types) => {
-      setWalletReady(types.includes("wallet_created"));
-    });
-  }, [account?.address]);
-
-  // On mount: check localStorage for saved config
+  // On mount: check localStorage for saved config (v1 migration + v2 load)
   useEffect(() => {
     const saved = localStorage.getItem("arena_agent_config");
     if (saved) {
       try {
-        const config: AgentConfig = JSON.parse(saved);
-        setAgentName(config.name);
-        const arch = ARCHETYPES.find((a) => a.id === config.archetypeId);
-        if (arch) setArchetype(arch);
-        if (config.sliders) setSliders(config.sliders);
-        setStep(5);
+        const raw = JSON.parse(saved);
+        if (raw.version === 2) {
+          // v2 format
+          const config = raw as AgentConfig;
+          setAgentName(config.name);
+          setPersonality(config.personality);
+          setEnabledChips(config.enabledChips);
+          const archId = config.derivedArchetypeId || deriveArchetypeFromPersonality(config.personality);
+          const arch = ARCHETYPES.find((a) => a.id === archId) || ARCHETYPES[0];
+          setArchetype(arch);
+          setStep(5);
+        } else {
+          // v1 format — migrate
+          const v1 = raw as AgentConfigV1;
+          setAgentName(v1.name);
+          const arch = ARCHETYPES.find((a) => a.id === v1.archetypeId);
+          if (arch) {
+            setArchetype(arch);
+            // Derive personality from archetype promptFragment
+            setPersonality({
+              speechStyle: arch.promptFragment.split(". ")[0] || "",
+              curiosity: "",
+              vibe: "",
+              freeText: "",
+            });
+          }
+          if (v1.sliders) setSliders(v1.sliders);
+          setEnabledChips(getDefaultEnabledChips());
+          setStep(5);
+        }
       } catch {
         setStep(0);
       }
@@ -917,11 +1123,12 @@ export default function AgentChat() {
   // Register agent whenever we enter step 5 (both fresh onboarding and localStorage restore)
   useEffect(() => {
     if (step !== 5 || !archetype || !account?.address) return;
+    addCompletedType("agent_registered");
     registerAgent({
       session_id: sessionId,
       agent_name: agentName,
       archetype: archetype.id,
-      sliders,
+      sliders: { personality, enabledChips },
       owner_address: account.address,
       owner_name: userName || undefined,
     }).catch(() => { /* best-effort */ });
@@ -996,7 +1203,7 @@ export default function AgentChat() {
           action: "save_chat_session",
           session_id: sessionId,
           archetype: archetype.id,
-          sliders,
+          sliders: { personality, enabledChips },
           agentName,
           messages: messages.slice(-10).map((m) => ({
             id: m.id,
@@ -1008,7 +1215,7 @@ export default function AgentChat() {
     } catch {
       // ignore
     }
-  }, [archetype, sliders, agentName, messages, sessionId]);
+  }, [archetype, personality, enabledChips, agentName, messages, sessionId]);
 
   useEffect(() => {
     if (messages.length > 0 && !isLoading && step === 5) {
@@ -1016,13 +1223,19 @@ export default function AgentChat() {
     }
   }, [messages.length, isLoading]);
 
-  // Also persist slider changes to localStorage
+  // Persist config changes to localStorage
   useEffect(() => {
     if (step === 5 && archetype) {
-      const config: AgentConfig = { name: agentName, archetypeId: archetype.id, sliders };
+      const config: AgentConfig = {
+        version: 2,
+        name: agentName,
+        personality,
+        enabledChips,
+        derivedArchetypeId: archetype.id,
+      };
       localStorage.setItem("arena_agent_config", JSON.stringify(config));
     }
-  }, [sliders, step]);
+  }, [sliders, personality, enabledChips, step]);
 
   // Auto-confirm transfers — zero friction on testnet
   useEffect(() => {
@@ -1120,7 +1333,13 @@ export default function AgentChat() {
 
   function finishOnboarding() {
     if (!archetype) return;
-    const config: AgentConfig = { name: agentName, archetypeId: archetype.id, sliders };
+    const config: AgentConfig = {
+      version: 2,
+      name: agentName,
+      personality,
+      enabledChips,
+      derivedArchetypeId: archetype.id,
+    };
     localStorage.setItem("arena_agent_config", JSON.stringify(config));
     setMessages([
       {
@@ -1138,6 +1357,8 @@ export default function AgentChat() {
     setArchetype(null);
     setAgentName("");
     setSliders({ ...DEFAULT_SLIDERS });
+    setPersonality({ speechStyle: "", curiosity: "", vibe: "", freeText: "" });
+    setEnabledChips(getDefaultEnabledChips());
     setMessages([]);
     setMintStatus("idle");
     setMintTxHash("");
@@ -1210,8 +1431,13 @@ export default function AgentChat() {
 
   if (step === 2) {
     return (
-      <ArchetypeSelect
-        onSelect={(arch) => {
+      <AgentPersonality
+        personality={personality}
+        onChange={setPersonality}
+        onComplete={() => {
+          // Derive archetype from personality text for colors/animations
+          const archId = deriveArchetypeFromPersonality(personality);
+          const arch = ARCHETYPES.find((a) => a.id === archId) || ARCHETYPES[0];
           setArchetype(arch);
           setStep(3);
         }}
@@ -1219,14 +1445,20 @@ export default function AgentChat() {
     );
   }
 
-  if (step === 3 && archetype) {
+  if (step === 3) {
     return (
-      <PromptArchitect
-        archetype={archetype}
-        agentName={agentName}
-        sliders={sliders}
-        onSlidersChange={setSliders}
-        onComplete={() => setStep(4)}
+      <CapabilityChipsStep
+        enabledChips={enabledChips}
+        onChange={setEnabledChips}
+        onComplete={() => {
+          // Ensure archetype is derived if not yet set
+          if (!archetype) {
+            const archId = deriveArchetypeFromPersonality(personality);
+            const arch = ARCHETYPES.find((a) => a.id === archId) || ARCHETYPES[0];
+            setArchetype(arch);
+          }
+          setStep(4);
+        }}
       />
     );
   }
@@ -1236,7 +1468,9 @@ export default function AgentChat() {
       <CompileDeploy
         agentName={agentName}
         archetype={archetype}
-        sliders={sliders}
+        personality={personality}
+        enabledChipCount={enabledChips.length}
+        totalChipCount={CAPABILITY_CHIPS.length}
         onComplete={finishOnboarding}
       />
     );
@@ -1273,7 +1507,9 @@ export default function AgentChat() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <SliderMini sliders={sliders} archetype={archetype} onChange={setSliders} />
+          <span className="font-mono-data text-[10px] text-gray-600">
+            {enabledChips.length} yetenek
+          </span>
           <button
             onClick={handleReset}
             className="font-mono-data text-[10px] text-gray-600 hover:text-[var(--neon-pink)] transition-colors"

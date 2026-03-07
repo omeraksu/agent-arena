@@ -286,6 +286,15 @@ body::after {
   animation: chipFadeIn 0.3s ease-out both;
 }
 
+/* ─── Capability Chip Toggle ─── */
+
+.chip-slot-in { animation: chipSlotIn 0.3s ease-out; }
+@keyframes chipSlotIn {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
 /* ─── Signal Pulse Button ─── */
 
 @keyframes signalPulse {

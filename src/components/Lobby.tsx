@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client, wallets, chain } from "@/lib/thirdweb";
 import { joinLobby, getLobbyStatus, type LobbyParticipant } from "@/lib/api";
-import { resolveAddressToName } from "@/lib/api";
+import { useArena } from "@/contexts/ArenaContext";
 
 const POLL_MS = 3000;
 const CODE_LENGTH = 6;
@@ -11,6 +11,7 @@ const CODE_LENGTH = 6;
 export default function Lobby() {
   const account = useActiveAccount();
   const navigate = useNavigate();
+  const { userName: myName } = useArena();
 
   const [phase, setPhase] = useState<"code" | "waiting" | "countdown">("code");
   const [codeChars, setCodeChars] = useState<string[]>(Array(CODE_LENGTH).fill(""));
@@ -18,10 +19,15 @@ export default function Lobby() {
   const [participants, setParticipants] = useState<LobbyParticipant[]>([]);
   const [countdownNum, setCountdownNum] = useState(3);
   const [workshopCode, setWorkshopCode] = useState("");
-  const [myName, setMyName] = useState<string | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const countdownEndRef = useRef<number>(0);
+  const myNameRef = useRef<string | null>(null);
+
+  // Keep ref in sync with context
+  useEffect(() => {
+    myNameRef.current = myName;
+  }, [myName]);
 
   // Check if we already have a workshop code in localStorage (browser refresh)
   useEffect(() => {
@@ -31,12 +37,6 @@ export default function Lobby() {
       setPhase("waiting");
     }
   }, []);
-
-  // Resolve our arena name
-  useEffect(() => {
-    if (!account?.address) return;
-    resolveAddressToName(account.address).then(setMyName);
-  }, [account?.address]);
 
   // ─── Code Entry ───
 
@@ -133,7 +133,7 @@ export default function Lobby() {
 
     // Also re-join on mount (idempotent) for browser refresh
     if (account?.address) {
-      joinLobby(workshopCode, account.address, myName || undefined).then((r) => {
+      joinLobby(workshopCode, account.address, myNameRef.current || undefined).then((r) => {
         if (active) handlePollResult(r);
       });
     }
@@ -148,7 +148,7 @@ export default function Lobby() {
       active = false;
       clearInterval(interval);
     };
-  }, [phase, workshopCode, account?.address, myName, handlePollResult]);
+  }, [phase, workshopCode, account?.address, handlePollResult]);
 
   // ─── Countdown Timer ───
 
@@ -173,16 +173,6 @@ export default function Lobby() {
       active = false;
     };
   }, [phase, navigate]);
-
-  // Also keep polling during countdown for status=started fallback
-  useEffect(() => {
-    if (phase !== "countdown" || !workshopCode) return;
-    const interval = setInterval(async () => {
-      const data = await getLobbyStatus(workshopCode);
-      if (data.status === "started") navigate("/");
-    }, POLL_MS);
-    return () => clearInterval(interval);
-  }, [phase, workshopCode, navigate]);
 
   const shortAddr = (addr: string) => addr.slice(0, 6) + ".." + addr.slice(-4);
 

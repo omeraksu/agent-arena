@@ -7,9 +7,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { formatEther } from "viem";
-import { getSupabase } from "./_lib/supabase";
-import { publicClient } from "./_lib/viem";
-import { BoundedMap } from "./_lib/bounded-map";
+import { getSupabase } from "./_lib/supabase.js";
+import { publicClient } from "./_lib/viem.js";
+import { BoundedMap } from "./_lib/bounded-map.js";
 
 // ─── Rate Limiting / Energy System ────────────────────────────────────
 
@@ -966,20 +966,44 @@ function buildSlidersPrompt(sliders?: {
   return `${techStyle} ${toneStyle} ${detailStyle}`;
 }
 
+// ─── Mad-Libs personality prompt builder ───
+
+interface MadLibsPersonality {
+  speechStyle?: string;
+  curiosity?: string;
+  vibe?: string;
+  freeText?: string;
+}
+
+function buildPersonalityPrompt(personality?: MadLibsPersonality): string {
+  if (!personality) return "Havali abi/abla. Bilgili ama hava atmayan.";
+  const parts: string[] = [];
+  if (personality.speechStyle) parts.push(`Konuşma tarzın: ${personality.speechStyle}.`);
+  if (personality.curiosity) parts.push(`En çok merak ettiğin konu: ${personality.curiosity}.`);
+  if (personality.vibe) parts.push(`Genel tavrın: ${personality.vibe}.`);
+  if (personality.freeText) parts.push(`Ek kişilik notu: ${personality.freeText}`);
+  return parts.join("\n") || "Havali abi/abla. Bilgili ama hava atmayan.";
+}
+
 function buildSystemPrompt(
   archetype?: string,
   sliders?: { technical?: number; tone?: number; detail?: number },
   agentName?: string,
   userName?: string,
-  userAddress?: string
+  userAddress?: string,
+  personality?: MadLibsPersonality
 ): string {
   const nameLine = agentName
     ? `\nSenin adın ${agentName}. Kendini bu isimle tanıt.`
     : "";
-  const archetypePrompt =
-    archetype && ARCHETYPE_PROMPTS[archetype]
+
+  // If personality provided (v2), use it; otherwise fallback to archetype prompts (v1)
+  const archetypePrompt = personality
+    ? `\nKARAKTERİN:\n${buildPersonalityPrompt(personality)}`
+    : archetype && ARCHETYPE_PROMPTS[archetype]
       ? `\nKARAKTERİN:\n${ARCHETYPE_PROMPTS[archetype]}`
       : "\nKARAKTERİN:\nHavali abi/abla. Bilgili ama hava atmayan.";
+
   const slidersPrompt = buildSlidersPrompt(sliders);
 
   let userContext = "";
@@ -1014,6 +1038,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     userName,
     pendingAgentMessages,
     recharge,
+    personality,
+    enabledToolNames,
   } = req.body;
 
   const sid = sessionId || "anonymous";
@@ -1062,7 +1088,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sliders,
     agentName,
     userName,
-    userAddress
+    userAddress,
+    personality
   );
 
   // Inject pending incoming agent messages into context
@@ -1096,13 +1123,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let currentMessages = [...apiMessages];
     let maxLoops = 5; // prevent infinite loops
 
+    // Filter tools by enabled capabilities (if provided)
+    const filteredTools = enabledToolNames?.length
+      ? TOOL_DEFINITIONS.filter(
+          (t) => enabledToolNames.includes(t.name) || t.name === "special_move" || t.name === "get_workshop_stats"
+        )
+      : TOOL_DEFINITIONS;
+
     while (maxLoops-- > 0) {
       const stream = client.messages.stream({
         model: "claude-sonnet-4-20250514",
         max_tokens: 300,
         system: systemPrompt,
         messages: currentMessages,
-        tools: TOOL_DEFINITIONS,
+        tools: filteredTools,
       });
 
       let hasToolUse = false;

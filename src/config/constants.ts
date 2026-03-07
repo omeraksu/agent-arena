@@ -5,7 +5,10 @@ export const EXPLORER_TX_URL = "https://testnet.snowtrace.io/tx/";
 export const EXPLORER_ADDRESS_URL = "https://testnet.snowtrace.io/address/";
 export const NETWORK_NAME = "Avalanche Fuji";
 
-export const POLL_INTERVAL = 3000;
+export const POLL_INTERVAL = 5000;
+export const SESSION_RESET_POLL_INTERVAL = 10000;
+export const SQUAD_POLL_INTERVAL = 10000;
+export const NAMES_POLL_INTERVAL = 30000;
 export const RATE_LIMIT_PER_SESSION = 30;
 export const MAX_FAUCET_REQUESTS = 3;
 export const DEFAULT_TRANSFER_AMOUNT = "0.001";

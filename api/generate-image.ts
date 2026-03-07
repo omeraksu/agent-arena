@@ -8,7 +8,7 @@
  * Both update nft_metadata_drafts.image_url and return public URL.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 

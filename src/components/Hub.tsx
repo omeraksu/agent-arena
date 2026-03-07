@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
-import { getUserProgress } from "@/lib/api";
+import { useArena } from "@/contexts/ArenaContext";
 
 interface ModuleCard {
   title: string;
@@ -90,21 +89,7 @@ const PROGRESS_STEPS = [
 
 export default function Hub() {
   const account = useActiveAccount();
-  const [completedTypes, setCompletedTypes] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!account?.address) return;
-    let active = true;
-    getUserProgress(account.address).then((types) => {
-      if (active) setCompletedTypes(types);
-    });
-    const interval = setInterval(() => {
-      getUserProgress(account.address).then((types) => {
-        if (active) setCompletedTypes(types);
-      });
-    }, 5000);
-    return () => { active = false; clearInterval(interval); };
-  }, [account?.address]);
+  const { completedTypes } = useArena();
 
   const hasType = (type: string) => completedTypes.includes(type);
   const stepsComplete = PROGRESS_STEPS.filter((s) => hasType(s.key)).length;

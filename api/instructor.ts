@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
-import { getSupabase } from "./_lib/supabase";
-import { BoundedMap } from "./_lib/bounded-map";
+import { getSupabase } from "./_lib/supabase.js";
+import { BoundedMap } from "./_lib/bounded-map.js";
+import { invalidateResetCache, getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 // In-memory fallback stores
 const inMemoryEvents: Array<{
@@ -316,12 +317,21 @@ Bu verilere dayanarak kisa bir karakter analizi yap.`;
       ] as const;
 
       const deleted: Record<string, number> = {};
+      // Map table → primary key column (for DELETE filter)
+      const pkMap: Record<string, string> = {
+        arena_names: "address",
+        agent_registry: "session_id",
+        rate_limits: "key",
+        nft_metadata: "token_id",
+        nft_metadata_drafts: "address",
+      };
       for (const table of tables) {
+        const pk = pkMap[table] || "id";
         const { data, error } = await supabase
           .from(table)
           .delete()
-          .not("id", "is", null)
-          .select("id");
+          .not(pk, "is", null)
+          .select(pk);
         if (error) {
           deleted[table] = -1;
         } else {
@@ -343,6 +353,7 @@ Bu verilere dayanarak kisa bir karakter analizi yap.`;
         created_at: new Date().toISOString(),
       };
       await supabase.from("activity_events").insert(resetEvent);
+      invalidateResetCache();
 
       return res.status(200).json({ ok: true, deleted });
     }
@@ -350,18 +361,8 @@ Bu verilere dayanarak kisa bir karakter analizi yap.`;
     case "finalize_meme": {
       if (!supabase) return res.status(500).json({ error: "Supabase yapilandirilmamis" });
 
-      // Get session boundary
-      let resetTime: string | null = null;
-      try {
-        const { data: resetData } = await supabase
-          .from("activity_events")
-          .select("created_at")
-          .eq("type", "session_reset")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-        resetTime = resetData?.created_at || null;
-      } catch { /* no reset */ }
+      // Get session boundary (cached)
+      const resetTime = await getSessionResetTime(supabase);
 
       // Find top voted meme in session
       let memeQuery = supabase

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { encodeFunctionData } from "viem";
-import { getSupabase } from "./_lib/supabase";
-import { publicClient, getWalletClient } from "./_lib/viem";
+import { getSupabase } from "./_lib/supabase.js";
+import { publicClient, getWalletClient } from "./_lib/viem.js";
 
 const WORKSHOP_NFT_ABI = [
   {

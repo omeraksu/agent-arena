@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { parseEther } from "viem";
-import { getSupabase } from "./_lib/supabase";
-import { getWalletClient } from "./_lib/viem";
-import { BoundedMap } from "./_lib/bounded-map";
+import { getSupabase } from "./_lib/supabase.js";
+import { getWalletClient } from "./_lib/viem.js";
+import { BoundedMap } from "./_lib/bounded-map.js";
 
 const FAUCET_AMOUNT = "0.005";
 const MAX_REQUESTS_PER_ADDRESS = 3;

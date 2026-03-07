@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
+import { getSupabase } from "./_lib/supabase.js";
+import { getSessionResetTime } from "./_lib/session-reset-cache.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = getSupabase();
@@ -9,18 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── GET: List memes ───
   if (req.method === "GET") {
-    // Resolve session boundary
-    let resetTime: string | null = null;
-    try {
-      const { data } = await supabase
-        .from("activity_events")
-        .select("created_at")
-        .eq("type", "session_reset")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      resetTime = data?.created_at || null;
-    } catch { /* no reset */ }
+    const resetTime = await getSessionResetTime(supabase);
 
     let query = supabase
       .from("memes")
@@ -110,17 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Check if already submitted in current session
-    let resetTime: string | null = null;
-    try {
-      const { data } = await supabase
-        .from("activity_events")
-        .select("created_at")
-        .eq("type", "session_reset")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      resetTime = data?.created_at || null;
-    } catch { /* no reset */ }
+    const resetTime = await getSessionResetTime(supabase);
 
     let existingQuery = supabase
       .from("memes")

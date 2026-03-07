@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getActivity, getAllNames, type ActivityEvent, type ArenaName } from "@/lib/api";
-import { POLL_INTERVAL } from "@/config/constants";
+import { POLL_INTERVAL, NAMES_POLL_INTERVAL } from "@/config/constants";
 
 function timestamp(dateStr: string) {
   const d = new Date(dateStr);
@@ -21,7 +21,7 @@ export default function LiveFeed() {
       setNameMap(map);
     }
     loadNames();
-    const interval = setInterval(loadNames, POLL_INTERVAL * 5); // Refresh names less frequently
+    const interval = setInterval(loadNames, NAMES_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 

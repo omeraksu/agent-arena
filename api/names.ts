@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabase } from "./_lib/supabase";
-import { BoundedMap } from "./_lib/bounded-map";
+import { getSupabase } from "./_lib/supabase.js";
+import { BoundedMap } from "./_lib/bounded-map.js";
 
 // In-memory fallback
 const nameRegistry = new BoundedMap<string, string>(500); // address → username

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getSquadStats, type SquadStats } from "@/lib/api";
+import { SQUAD_POLL_INTERVAL } from "@/config/constants";
 
 export default function SquadMilestone() {
   const [stats, setStats] = useState<SquadStats | null>(null);
@@ -13,7 +14,7 @@ export default function SquadMilestone() {
       } catch { /* ignore */ }
     }
     poll();
-    const interval = setInterval(poll, 5000);
+    const interval = setInterval(poll, SQUAD_POLL_INTERVAL);
     return () => { active = false; clearInterval(interval); };
   }, []);
 
