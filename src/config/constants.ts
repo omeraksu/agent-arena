@@ -70,5 +70,5 @@ export const SIGNAL_ROUND_DURATION_MS = 30000;
 export const SIGNAL_ROUND_RATE_LIMIT_MS = 1000;
 
 // ─── Energy System ───
-export const ENERGY_MAX = 60;
-export const ENERGY_QUIZ_BONUS = 10;
+export const ENERGY_MAX = 100;
+export const ENERGY_QUIZ_BONUS = 15;
