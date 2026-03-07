@@ -13,8 +13,8 @@ import { BoundedMap } from "./_lib/bounded-map.js";
 
 // ─── Rate Limiting / Energy System ────────────────────────────────────
 
-const RATE_LIMIT = 100;
-const ENERGY_QUIZ_BONUS = 15;
+const RATE_LIMIT = 250;
+const ENERGY_QUIZ_BONUS = 25;
 const sessionCounts = new BoundedMap<string, number>(200);
 const sessionBonuses = new BoundedMap<string, number>(200);
 
