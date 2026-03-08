@@ -1,15 +1,143 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a0a2e"/>
-      <stop offset="100%" style="stop-color:#2d1b69"/>
+    <linearGradient id="sg-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0418"/>
+      <stop offset="50%" stop-color="#150a30"/>
+      <stop offset="100%" stop-color="#0d0620"/>
     </linearGradient>
+    <radialGradient id="sg-glow" cx="50%" cy="42%" r="45%">
+      <stop offset="0%" stop-color="#b388ff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#b388ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sg-neon">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sg-soft-glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Star field pattern -->
+    <pattern id="sg-stars" width="120" height="120" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="15" r="0.8" fill="#b388ff" opacity="0.3"/>
+      <circle cx="45" cy="8" r="0.5" fill="#e0b0ff" opacity="0.2"/>
+      <circle cx="78" cy="42" r="0.6" fill="#b388ff" opacity="0.25"/>
+      <circle cx="30" cy="65" r="0.7" fill="#d1c4e9" opacity="0.2"/>
+      <circle cx="95" cy="80" r="0.5" fill="#b388ff" opacity="0.3"/>
+      <circle cx="60" cy="100" r="0.8" fill="#e0b0ff" opacity="0.15"/>
+      <circle cx="110" cy="30" r="0.6" fill="#b388ff" opacity="0.2"/>
+      <circle cx="15" cy="105" r="0.5" fill="#d1c4e9" opacity="0.25"/>
+    </pattern>
   </defs>
-  <rect width="512" height="512" rx="32" fill="url(#bg)"/>
-  <circle cx="256" cy="200" r="80" fill="#b388ff" opacity="0.15"/>
-  <circle cx="256" cy="200" r="60" fill="none" stroke="#b388ff" stroke-width="2"/>
-  <text x="256" y="220" font-family="serif" font-size="64" fill="#b388ff" text-anchor="middle">&#x2728;</text>
-  <text x="256" y="340" font-family="serif" font-size="28" fill="#b388ff" text-anchor="middle" font-weight="bold">SAGE</text>
-  <text x="256" y="375" font-family="sans-serif" font-size="16" fill="#7c4dff" text-anchor="middle">Agent Arena Workshop</text>
-  <rect x="156" y="410" width="200" height="2" rx="1" fill="#b388ff" opacity="0.4"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="32" fill="url(#sg-bg)"/>
+  <rect width="512" height="512" rx="32" fill="url(#sg-glow)"/>
+  <rect width="512" height="512" rx="32" fill="url(#sg-stars)"/>
+
+  <!-- Outer concentric rings (mandala) -->
+  <circle cx="256" cy="220" r="170" fill="none" stroke="#b388ff" stroke-width="0.3" opacity="0.08" stroke-dasharray="2,8">
+    <animateTransform attributeName="transform" type="rotate" values="0 256 220;360 256 220" dur="120s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="256" cy="220" r="155" fill="none" stroke="#b388ff" stroke-width="0.5" opacity="0.1" stroke-dasharray="4,12">
+    <animateTransform attributeName="transform" type="rotate" values="360 256 220;0 256 220" dur="90s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="256" cy="220" r="138" fill="none" stroke="#7c4dff" stroke-width="0.4" opacity="0.12" stroke-dasharray="1,6">
+    <animateTransform attributeName="transform" type="rotate" values="0 256 220;360 256 220" dur="75s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="256" cy="220" r="120" fill="none" stroke="#b388ff" stroke-width="0.6" opacity="0.08"/>
+
+  <!-- Mandala geometric spokes -->
+  <g stroke="#b388ff" stroke-width="0.3" fill="none" opacity="0.1">
+    <line x1="256" y1="70" x2="256" y2="370"/>
+    <line x1="106" y1="220" x2="406" y2="220"/>
+    <line x1="150" y1="114" x2="362" y2="326"/>
+    <line x1="362" y1="114" x2="150" y2="326"/>
+    <line x1="128" y1="160" x2="384" y2="280"/>
+    <line x1="384" y1="160" x2="128" y2="280"/>
+  </g>
+
+  <!-- Inner decorative ring with dots -->
+  <circle cx="256" cy="220" r="95" fill="none" stroke="#b388ff" stroke-width="0.8" opacity="0.15">
+    <animateTransform attributeName="transform" type="rotate" values="0 256 220;-360 256 220" dur="100s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Ring node dots -->
+  <g fill="#b388ff" opacity="0.3">
+    <circle cx="256" cy="125" r="3">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="351" cy="220" r="3">
+      <animate attributeName="opacity" values="0.6;0.3;0.6" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="256" cy="315" r="3">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="161" cy="220" r="3">
+      <animate attributeName="opacity" values="0.6;0.3;0.6" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Center infinity/wisdom symbol -->
+  <g filter="url(#sg-soft-glow)">
+    <!-- Outer eye shape -->
+    <path d="M196 220 Q256 160 316 220 Q256 280 196 220Z" fill="none" stroke="#b388ff" stroke-width="2" opacity="0.5"/>
+    <!-- Inner eye circle -->
+    <circle cx="256" cy="220" r="28" fill="#b388ff" opacity="0.08" stroke="#b388ff" stroke-width="1.5" opacity="0.4"/>
+    <!-- Pupil with glow -->
+    <circle cx="256" cy="220" r="12" fill="#b388ff" opacity="0.25">
+      <animate attributeName="r" values="12;14;12" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.25;0.4;0.25" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="256" cy="220" r="4" fill="#e0b0ff" opacity="0.6"/>
+  </g>
+
+  <!-- Floating wisdom runes (small geometric shapes) -->
+  <g fill="none" stroke="#7c4dff" stroke-width="0.5" opacity="0.15">
+    <polygon points="160,120 168,108 176,120"/>
+    <polygon points="340,130 348,118 356,130"/>
+    <rect x="130" y="280" width="12" height="12" transform="rotate(45 136 286)"/>
+    <polygon points="370,290 378,278 386,290"/>
+    <circle cx="180" cy="320" r="5"/>
+    <circle cx="340" cy="310" r="5"/>
+  </g>
+
+  <!-- Archetype label -->
+  <text x="256" y="380" font-family="Georgia, serif" font-size="32" fill="#b388ff" text-anchor="middle" font-weight="bold" filter="url(#sg-neon)">
+    SAGE
+  </text>
+
+  <!-- Subtitle -->
+  <text x="256" y="410" font-family="Georgia, serif" font-size="13" fill="#7c4dff" text-anchor="middle" letter-spacing="3">
+    AGENT ARENA WORKSHOP
+  </text>
+
+  <!-- Separator line -->
+  <line x1="176" y1="428" x2="336" y2="428" stroke="#b388ff" stroke-width="1" opacity="0.2"/>
+  <circle cx="256" cy="428" r="2" fill="#b388ff" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Bottom wisdom text -->
+  <text x="256" y="458" font-family="Georgia, serif" font-size="9" fill="#7c4dff" text-anchor="middle" opacity="0.2" letter-spacing="2">
+    KNOWLEDGE IS THE TRUE CHAIN
+  </text>
+
+  <!-- Corner ornaments -->
+  <g stroke="#b388ff" stroke-width="1" fill="none" opacity="0.15">
+    <path d="M20 44 L20 20 L44 20"/>
+    <circle cx="20" cy="20" r="3" fill="#b388ff" opacity="0.2"/>
+    <path d="M468 20 L492 20 L492 44"/>
+    <circle cx="492" cy="20" r="3" fill="#b388ff" opacity="0.2"/>
+    <path d="M20 468 L20 492 L44 492"/>
+    <circle cx="20" cy="492" r="3" fill="#b388ff" opacity="0.2"/>
+    <path d="M468 492 L492 492 L492 468"/>
+    <circle cx="492" cy="492" r="3" fill="#b388ff" opacity="0.2"/>
+  </g>
 </svg>

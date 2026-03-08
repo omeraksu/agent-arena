@@ -1,17 +1,166 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a1a1a"/>
-      <stop offset="100%" style="stop-color:#2a0a2a"/>
+    <linearGradient id="gl-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0008"/>
+      <stop offset="50%" stop-color="#180010"/>
+      <stop offset="100%" stop-color="#0c0008"/>
     </linearGradient>
+    <radialGradient id="gl-glow" cx="50%" cy="42%" r="50%">
+      <stop offset="0%" stop-color="#ff1744" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ff1744" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="gl-neon">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Glitch displacement filter -->
+    <filter id="gl-glitch1" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.08" numOctaves="2" seed="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="gl-glitch2" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="3" seed="7" result="noise">
+        <animate attributeName="seed" values="7;42;13;7" dur="4s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="B"/>
+    </filter>
+    <!-- Pixel grid pattern -->
+    <pattern id="gl-pixels" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="7" height="7" fill="none" stroke="#ff1744" stroke-width="0.15" opacity="0.06"/>
+    </pattern>
+    <!-- Noise static pattern -->
+    <filter id="gl-static">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" seed="15" result="noise">
+        <animate attributeName="seed" values="15;88;33;61;15" dur="0.5s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feColorMatrix type="saturate" values="0" in="noise" result="monoNoise"/>
+      <feComponentTransfer in="monoNoise" result="dimNoise">
+        <feFuncA type="linear" slope="0.03"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="dimNoise" mode="screen"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="32" fill="url(#bg)"/>
-  <circle cx="256" cy="200" r="80" fill="#ff1744" opacity="0.1"/>
-  <circle cx="260" cy="198" r="60" fill="none" stroke="#ff1744" stroke-width="1" opacity="0.6"/>
-  <circle cx="253" cy="202" r="60" fill="none" stroke="#00e5ff" stroke-width="1" opacity="0.6"/>
-  <text x="258" y="218" font-family="monospace" font-size="48" fill="#ff1744" text-anchor="middle" opacity="0.7">?!</text>
-  <text x="254" y="214" font-family="monospace" font-size="48" fill="#00e5ff" text-anchor="middle" opacity="0.7">?!</text>
-  <text x="256" y="340" font-family="monospace" font-size="28" fill="#ff1744" text-anchor="middle" font-weight="bold">GL1TCH</text>
-  <text x="256" y="375" font-family="monospace" font-size="16" fill="#888" text-anchor="middle">Agent Arena Workshop</text>
-  <rect x="156" y="410" width="200" height="2" rx="1" fill="#ff1744" opacity="0.4"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="32" fill="url(#gl-bg)"/>
+  <rect width="512" height="512" rx="32" fill="url(#gl-glow)"/>
+  <rect width="512" height="512" rx="32" fill="url(#gl-pixels)"/>
+
+  <!-- Static noise overlay -->
+  <rect width="512" height="512" rx="32" fill="#ff1744" opacity="0.02" filter="url(#gl-static)"/>
+
+  <!-- Glitch horizontal bars -->
+  <g opacity="0.06">
+    <rect x="0" y="95" width="512" height="3" fill="#ff1744">
+      <animate attributeName="x" values="0;-8;3;0" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="185" width="512" height="2" fill="#00e5ff">
+      <animate attributeName="x" values="0;5;-3;0" dur="0.4s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="270" width="512" height="4" fill="#ff1744">
+      <animate attributeName="x" values="0;-6;4;0" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="345" width="512" height="2" fill="#00e5ff">
+      <animate attributeName="x" values="0;7;-5;0" dur="0.35s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="410" width="512" height="3" fill="#ff1744">
+      <animate attributeName="x" values="0;-4;6;0" dur="0.45s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Corrupted grid blocks -->
+  <g fill="#ff1744" opacity="0.04">
+    <rect x="60" y="80" width="24" height="16"/>
+    <rect x="300" y="120" width="40" height="8"/>
+    <rect x="420" y="250" width="16" height="24"/>
+    <rect x="80" y="300" width="32" height="12"/>
+    <rect x="350" y="380" width="24" height="16"/>
+  </g>
+
+  <!-- Main glitch symbol: "?!" split into RGB channels -->
+  <g transform="translate(256,210)" font-family="monospace" font-weight="bold">
+    <!-- Red channel (offset left) -->
+    <text x="-4" y="15" font-size="80" fill="#ff1744" text-anchor="middle" opacity="0.4" filter="url(#gl-glitch2)">
+      ?!
+    </text>
+    <!-- Cyan channel (offset right) -->
+    <text x="4" y="15" font-size="80" fill="#00e5ff" text-anchor="middle" opacity="0.25">
+      ?!
+    </text>
+    <!-- White main layer -->
+    <text x="0" y="15" font-size="80" fill="#ffffff" text-anchor="middle" opacity="0.7">
+      ?!
+    </text>
+  </g>
+
+  <!-- Decorative corrupted circles -->
+  <g fill="none" opacity="0.1">
+    <circle cx="256" cy="210" r="90" stroke="#ff1744" stroke-width="1" stroke-dasharray="20,10,5,10" filter="url(#gl-glitch1)"/>
+    <circle cx="256" cy="210" r="105" stroke="#00e5ff" stroke-width="0.5" stroke-dasharray="8,16">
+      <animateTransform attributeName="transform" type="rotate" values="0 256 210;360 256 210" dur="30s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="256" cy="210" r="120" stroke="#ff1744" stroke-width="0.3" stroke-dasharray="3,20">
+      <animateTransform attributeName="transform" type="rotate" values="360 256 210;0 256 210" dur="45s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- "Broken" scan lines -->
+  <g stroke="#ff1744" stroke-width="0.5" opacity="0.06">
+    <line x1="100" y1="140" x2="230" y2="140"/>
+    <line x1="260" y1="140" x2="420" y2="140"/>
+    <line x1="80" y1="280" x2="200" y2="280"/>
+    <line x1="220" y1="280" x2="440" y2="280"/>
+  </g>
+
+  <!-- Error text fragments -->
+  <g font-family="monospace" font-size="8" fill="#ff1744" opacity="0.1">
+    <text x="70" y="110">ERR::0xDEAD</text>
+    <text x="360" y="100">SEGFAULT</text>
+    <text x="80" y="350">CORRUPT</text>
+    <text x="370" y="340">OVERFLOW</text>
+    <text x="60" y="430" opacity="0.06">%$#@!&amp;*</text>
+    <text x="400" y="440" opacity="0.06">NULL_PTR</text>
+  </g>
+
+  <!-- Archetype label (glitched) -->
+  <g transform="translate(256,370)" text-anchor="middle" font-family="monospace" font-size="32" font-weight="bold">
+    <!-- Glitch offset layers -->
+    <text x="-3" y="0" fill="#00e5ff" opacity="0.3">GL1TCH</text>
+    <text x="3" y="0" fill="#ff1744" opacity="0.3">GL1TCH</text>
+    <text x="0" y="0" fill="#ffffff" opacity="0.8" filter="url(#gl-neon)">GL1TCH</text>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="256" y="400" font-family="monospace" font-size="13" fill="#ff1744" text-anchor="middle" letter-spacing="3" opacity="0.6">
+    AGENT ARENA WORKSHOP
+  </text>
+
+  <!-- Separator (broken) -->
+  <line x1="156" y1="418" x2="240" y2="418" stroke="#ff1744" stroke-width="1" opacity="0.2"/>
+  <line x1="270" y1="418" x2="356" y2="418" stroke="#ff1744" stroke-width="1" opacity="0.2"/>
+
+  <!-- Bottom text -->
+  <text x="256" y="450" font-family="monospace" font-size="9" fill="#ff1744" text-anchor="middle" opacity="0.15" letter-spacing="1">
+    EMBRACE THE CHAOS
+  </text>
+
+  <!-- Corner brackets (some "broken") -->
+  <g stroke="#ff1744" stroke-width="1.2" fill="none" opacity="0.2">
+    <path d="M18 46 L18 18 L46 18"/>
+    <path d="M466 18 L494 18 L494 46"/>
+    <!-- Bottom-left: glitched offset -->
+    <path d="M18 466 L18 494 L46 494" opacity="0.1"/>
+    <path d="M21 469 L21 497 L49 497" stroke="#00e5ff" opacity="0.15"/>
+    <!-- Bottom-right: glitched offset -->
+    <path d="M466 494 L494 494 L494 466" opacity="0.1"/>
+    <path d="M463 491 L491 491 L491 463" stroke="#00e5ff" opacity="0.15"/>
+  </g>
+
+  <!-- Rapid flicker element -->
+  <rect x="180" y="195" width="152" height="30" fill="#ff1744" opacity="0">
+    <animate attributeName="opacity" values="0;0.02;0;0;0.01;0" dur="2s" repeatCount="indefinite"/>
+  </rect>
 </svg>

@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabase } from "./_lib/supabase.js";
+import { TOKEN_SYMBOL } from "./_lib/brand.js";
 
 interface TransferRequest {
   id: string;
@@ -97,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (inMemoryRequests.length > 100) inMemoryRequests.shift();
     }
 
-    console.log(`[requests] POST new request: ${request.from_name || request.from_address} → ${request.to_name || request.to_address} (${request.amount} ETH). Total: ${inMemoryRequests.length}`);
+    console.log(`[requests] POST new request: ${request.from_name || request.from_address} → ${request.to_name || request.to_address} (${request.amount} ${TOKEN_SYMBOL}). Total: ${inMemoryRequests.length}`);
     return res.status(201).json(request);
   }
 

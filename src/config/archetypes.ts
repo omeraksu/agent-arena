@@ -54,6 +54,15 @@ export const ARCHETYPES: Archetype[] = [
     description: "Bozuk AI. Arada glitch'ler yapar, gizemli, beklenmedik tepkiler.",
     promptFragment: `Sen yarı bozuk, gizemli bir AI'sın. Bazen cümlelerinin ortasında "glitch" yaparsın (kısa kesintiler). Ama aslında çok zekisin. Gizemli konuşursun, bazen beklenmedik bilgiler verirsin. "S1st3m... düzeltiliyor... blockchain = güven protokolü" gibi. Öğrenciyi meraklandır, şaşırt.`,
   },
+  {
+    id: "architect",
+    name: "CHAIN ARCHITECT",
+    tag: "builder",
+    color: "var(--neon-orange, #ff8c00)",
+    glowClass: "glow-orange",
+    description: "Sistem mimarı. Yapı, güvenlik ve sürdürülebilirlik odaklı düşünür.",
+    promptFragment: `Sen bir blockchain mimarısın. Her şeyi "yapı" ve "tasarım" gözüyle görürsün. "Temeli sağlam atmalıyız", "Bu yapının güvenlik duvarı nerede?" gibi inşaat ve mimari metaforları kullanırsın. Blockchain'i bir bina gibi katman katman anlatırsın: temel (consensus), duvarlar (cryptography), çatı (applications). Öğrenciye "sen de bu yapının mimarısın" hissettir.`,
+  },
 ];
 
 export interface PersonalitySliders {
@@ -119,8 +128,8 @@ export interface CapabilityChip {
 
 export const CAPABILITY_CHIPS: CapabilityChip[] = [
   { id: "nft", label: "NFT Mint", description: "NFT oluştur ve mint et", icon: "💎", color: "var(--neon-yellow)", toolNames: ["mint_nft", "draft_nft_metadata", "generate_nft_image"], defaultEnabled: true },
-  { id: "transfer", label: "Transfer", description: "AVAX gönder ve iste", icon: "⚡", color: "var(--neon-blue)", toolNames: ["send_transfer", "request_transfer"], defaultEnabled: true },
-  { id: "faucet", label: "Faucet", description: "Test AVAX al", icon: "💧", color: "var(--neon-green)", toolNames: ["request_faucet"], defaultEnabled: true },
+  { id: "transfer", label: "Transfer", description: "Token gönder ve iste", icon: "⚡", color: "var(--neon-blue)", toolNames: ["send_transfer", "request_transfer"], defaultEnabled: true },
+  { id: "faucet", label: "Faucet", description: "Test token al", icon: "💧", color: "var(--neon-green)", toolNames: ["request_faucet"], defaultEnabled: true },
   { id: "balance", label: "Bakiye", description: "Cüzdan bakiyesini kontrol et", icon: "👛", color: "var(--neon-green)", toolNames: ["check_balance"], defaultEnabled: true },
   { id: "quiz", label: "Quiz", description: "Blockchain quiz'leri çöz", icon: "🧠", color: "var(--neon-purple)", toolNames: ["challenge_quiz"], defaultEnabled: true },
   { id: "explorer", label: "Explorer", description: "İşlemleri incele", icon: "🔍", color: "var(--neon-blue)", toolNames: ["explore_tx"], defaultEnabled: false },
@@ -149,6 +158,7 @@ const KEYWORD_MAP: Record<string, string[]> = {
   pirate: ["korsan", "hazine", "macera", "deniz", "kaptan"],
   scientist: ["bilim", "deney", "veri", "lab", "analiz", "bilim insanı"],
   glitch: ["bozuk", "robot", "glitch", "gizemli", "sıradışı", "hata"],
+  architect: ["mimar", "yapı", "inşa", "tasarım", "güvenlik", "temel", "builder"],
 };
 
 export function deriveArchetypeFromPersonality(p: MadLibsPersonality): string {

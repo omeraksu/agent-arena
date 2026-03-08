@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { useArena } from "@/contexts/ArenaContext";
+import { brand } from "@/config/brand";
 
 interface ModuleCard {
   title: string;
@@ -18,7 +19,7 @@ const modules: ModuleCard[] = [
   {
     title: "WALLET_MGMT",
     subtitle: "// cuzdan modulu",
-    description: "Dijital cuzdanini olustur, bakiyeni gor, arkadasina AVAX gonder",
+    description: `Dijital cuzdanini olustur, bakiyeni gor, arkadasina ${brand.tokenSymbol} gonder`,
     tag: "PROC_01",
     to: "/wallet",
     glowClass: "glow-blue",
@@ -107,6 +108,17 @@ export default function Hub() {
         <p className="font-mono-data text-[10px] text-gray-500 text-center uppercase tracking-widest">
           blockchain kesif terminali // workshop v0.1
         </p>
+        {/* Powered by Brand */}
+        <div className="flex items-center justify-center gap-2 mt-3 opacity-40">
+          <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--brand-color)]" />
+          <svg width="12" height="12" viewBox={brand.logoSvgViewBox} fill="none">
+            <path d={brand.logoSvgPath} fill="var(--brand-color)" />
+          </svg>
+          <span className="font-mono-data text-[9px] text-[var(--brand-color)] tracking-widest">
+            {brand.poweredByText}
+          </span>
+          <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--brand-color)]" />
+        </div>
       </div>
 
       {/* Progress Bar */}

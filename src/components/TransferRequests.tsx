@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useActiveAccount, useSendTransaction } from "thirdweb/react";
 import { prepareTransaction, toWei } from "thirdweb";
 import { chain, client } from "@/lib/thirdweb";
+import { TOKEN_SYMBOL } from "@/config/constants";
 import {
   getIncomingRequests,
   respondToRequest,
@@ -157,7 +158,7 @@ export default function TransferRequests() {
                     <div className="font-mono-data text-xs">
                       <span className="text-[var(--neon-blue)]">{displayFrom}</span>
                       <span className="text-gray-500"> senden </span>
-                      <span className="text-[var(--neon-green)] font-bold">{req.amount} AVAX</span>
+                      <span className="text-[var(--neon-green)] font-bold">{req.amount} {TOKEN_SYMBOL}</span>
                       <span className="text-gray-500"> istiyor</span>
                     </div>
                     {req.message && (

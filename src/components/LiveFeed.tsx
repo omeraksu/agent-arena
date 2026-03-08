@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getActivity, getAllNames, type ActivityEvent, type ArenaName } from "@/lib/api";
-import { POLL_INTERVAL, NAMES_POLL_INTERVAL } from "@/config/constants";
+import { POLL_INTERVAL, NAMES_POLL_INTERVAL, TOKEN_SYMBOL, FAUCET_AMOUNT } from "@/config/constants";
 
 function timestamp(dateStr: string) {
   const d = new Date(dateStr);
@@ -69,7 +69,7 @@ export default function LiveFeed() {
         const toDisplay = e.data.toName
           ? `${e.data.toName}.arena`
           : displayAddr(e.data.to || "?");
-        return `transfer(${displayAddr(e.address)} => ${toDisplay}, ${e.data.amount || "?"} AVAX)`;
+        return `transfer(${displayAddr(e.address)} => ${toDisplay}, ${e.data.amount || "?"} ${TOKEN_SYMBOL})`;
       },
     },
     nft_mint: {
@@ -80,7 +80,7 @@ export default function LiveFeed() {
     faucet: {
       tag: "FAUCET",
       color: "text-purple-400",
-      msg: (e) => `faucet_drip(${displayAddr(e.address)}) => 0.005 AVAX`,
+      msg: (e) => `faucet_drip(${displayAddr(e.address)}) => ${FAUCET_AMOUNT} ${TOKEN_SYMBOL}`,
     },
     transfer_request: {
       tag: "REQ",
@@ -92,7 +92,7 @@ export default function LiveFeed() {
         const toDisplay = e.data.toName
           ? `${e.data.toName}.arena`
           : displayAddr(e.data.toAddress || "?");
-        return `request(${fromDisplay} => ${toDisplay}, ${e.data.amount || "?"} AVAX)`;
+        return `request(${fromDisplay} => ${toDisplay}, ${e.data.amount || "?"} ${TOKEN_SYMBOL})`;
       },
     },
     transfer_request_accepted: {
@@ -105,7 +105,7 @@ export default function LiveFeed() {
         const fromDisplay = e.data.fromName
           ? `${e.data.fromName}.arena`
           : displayAddr(e.data.fromAddress || "?");
-        return `accept_request(${displayAddr(e.address)} => ${fromDisplay}, ${e.data.amount || "?"} AVAX)`;
+        return `accept_request(${displayAddr(e.address)} => ${fromDisplay}, ${e.data.amount || "?"} ${TOKEN_SYMBOL})`;
       },
     },
     agent_registered: {

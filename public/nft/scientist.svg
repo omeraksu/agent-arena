@@ -1,15 +1,180 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#001a2e"/>
-      <stop offset="100%" style="stop-color:#003d5c"/>
+    <linearGradient id="sc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020d14"/>
+      <stop offset="50%" stop-color="#041a28"/>
+      <stop offset="100%" stop-color="#020e16"/>
     </linearGradient>
+    <radialGradient id="sc-glow" cx="50%" cy="42%" r="45%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sc-neon">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sc-soft">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Grid pattern -->
+    <pattern id="sc-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0L0 0 0 40" fill="none" stroke="#00e5ff" stroke-width="0.2" opacity="0.08"/>
+    </pattern>
   </defs>
-  <rect width="512" height="512" rx="32" fill="url(#bg)"/>
-  <circle cx="256" cy="200" r="80" fill="#00e5ff" opacity="0.15"/>
-  <circle cx="256" cy="200" r="60" fill="none" stroke="#00e5ff" stroke-width="2"/>
-  <text x="256" y="220" font-family="sans-serif" font-size="64" fill="#00e5ff" text-anchor="middle">&#x2697;</text>
-  <text x="256" y="340" font-family="sans-serif" font-size="28" fill="#00e5ff" text-anchor="middle" font-weight="bold">SCIENTIST</text>
-  <text x="256" y="375" font-family="sans-serif" font-size="16" fill="#00b8d4" text-anchor="middle">Agent Arena Workshop</text>
-  <rect x="156" y="410" width="200" height="2" rx="1" fill="#00e5ff" opacity="0.4"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="32" fill="url(#sc-bg)"/>
+  <rect width="512" height="512" rx="32" fill="url(#sc-glow)"/>
+  <rect width="512" height="512" rx="32" fill="url(#sc-grid)"/>
+
+  <!-- HUD frame lines -->
+  <g stroke="#00e5ff" fill="none" opacity="0.1" stroke-width="0.5">
+    <line x1="60" y1="60" x2="452" y2="60"/>
+    <line x1="60" y1="452" x2="452" y2="452"/>
+    <line x1="60" y1="60" x2="60" y2="452"/>
+    <line x1="452" y1="60" x2="452" y2="452"/>
+  </g>
+
+  <!-- Sine wave visualization -->
+  <g transform="translate(0,0)">
+    <path d="M60 160 Q100 120 140 160 Q180 200 220 160 Q260 120 300 160 Q340 200 380 160 Q420 120 452 160"
+          fill="none" stroke="#00e5ff" stroke-width="1" opacity="0.12">
+      <animate attributeName="d"
+               values="M60 160 Q100 120 140 160 Q180 200 220 160 Q260 120 300 160 Q340 200 380 160 Q420 120 452 160;M60 160 Q100 200 140 160 Q180 120 220 160 Q260 200 300 160 Q340 120 380 160 Q420 200 452 160;M60 160 Q100 120 140 160 Q180 200 220 160 Q260 120 300 160 Q340 200 380 160 Q420 120 452 160"
+               dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M60 160 Q100 140 140 160 Q180 180 220 160 Q260 140 300 160 Q340 180 380 160 Q420 140 452 160"
+          fill="none" stroke="#00b8d4" stroke-width="0.5" opacity="0.08">
+      <animate attributeName="d"
+               values="M60 160 Q100 140 140 160 Q180 180 220 160 Q260 140 300 160 Q340 180 380 160 Q420 140 452 160;M60 160 Q100 180 140 160 Q180 140 220 160 Q260 180 300 160 Q340 140 380 160 Q420 180 452 160;M60 160 Q100 140 140 160 Q180 180 220 160 Q260 140 300 160 Q340 180 380 160 Q420 140 452 160"
+               dur="5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Data graph (bar chart style) at bottom-left -->
+  <g transform="translate(75,350)" fill="#00e5ff" opacity="0.08">
+    <rect x="0" y="30" width="6" height="20"/>
+    <rect x="10" y="15" width="6" height="35"/>
+    <rect x="20" y="25" width="6" height="25"/>
+    <rect x="30" y="10" width="6" height="40"/>
+    <rect x="40" y="20" width="6" height="30"/>
+    <rect x="50" y="5" width="6" height="45"/>
+    <rect x="60" y="18" width="6" height="32"/>
+    <rect x="70" y="8" width="6" height="42"/>
+  </g>
+  <!-- Graph axis -->
+  <line x1="73" y1="400" x2="155" y2="400" stroke="#00e5ff" stroke-width="0.5" opacity="0.1"/>
+  <line x1="73" y1="350" x2="73" y2="400" stroke="#00e5ff" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- Data readout text at bottom-right -->
+  <g font-family="monospace" font-size="9" fill="#00e5ff" opacity="0.12">
+    <text x="370" y="360">BLOCK: 24,891,003</text>
+    <text x="370" y="374">GAS: 0.00 AVAX</text>
+    <text x="370" y="388">STATUS: ACTIVE</text>
+    <text x="370" y="402">CHAIN: FUJI-C</text>
+  </g>
+
+  <!-- Central atom/molecule structure -->
+  <g transform="translate(256,220)" filter="url(#sc-soft)">
+    <!-- Orbital rings -->
+    <ellipse rx="80" ry="30" fill="none" stroke="#00e5ff" stroke-width="0.8" opacity="0.2">
+      <animateTransform attributeName="transform" type="rotate" values="-30;330" dur="20s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse rx="80" ry="30" fill="none" stroke="#00e5ff" stroke-width="0.8" opacity="0.2">
+      <animateTransform attributeName="transform" type="rotate" values="30;390" dur="25s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse rx="80" ry="30" fill="none" stroke="#00e5ff" stroke-width="0.8" opacity="0.2">
+      <animateTransform attributeName="transform" type="rotate" values="90;450" dur="30s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Central nucleus -->
+    <circle r="22" fill="#041a28" stroke="#00e5ff" stroke-width="1.5" opacity="0.4"/>
+    <circle r="12" fill="#00e5ff" opacity="0.12"/>
+    <circle r="5" fill="#00e5ff" opacity="0.4">
+      <animate attributeName="r" values="5;7;5" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Beaker icon inside nucleus -->
+    <g stroke="#b0f0ff" stroke-width="1.2" fill="none" opacity="0.5">
+      <path d="M-4,-6 L-4,2 L-7,8 L7,8 L4,2 L4,-6"/>
+      <line x1="-3" y1="-6" x2="3" y2="-6"/>
+    </g>
+  </g>
+
+  <!-- Floating data points -->
+  <g fill="#00e5ff" opacity="0.15">
+    <circle cx="120" cy="120" r="2">
+      <animate attributeName="opacity" values="0.15;0.3;0.15" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="140" r="1.5">
+      <animate attributeName="opacity" values="0.1;0.25;0.1" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="380" cy="260" r="2">
+      <animate attributeName="opacity" values="0.15;0.3;0.15" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="140" cy="280" r="1.5">
+      <animate attributeName="opacity" values="0.1;0.25;0.1" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Connection lines between data points and center -->
+  <g stroke="#00e5ff" stroke-width="0.3" opacity="0.06" stroke-dasharray="4,8">
+    <line x1="120" y1="120" x2="256" y2="220"/>
+    <line x1="400" y1="140" x2="256" y2="220"/>
+    <line x1="380" y1="260" x2="256" y2="220"/>
+    <line x1="140" y1="280" x2="256" y2="220"/>
+  </g>
+
+  <!-- HUD corner elements -->
+  <g font-family="monospace" font-size="8" fill="#00e5ff" opacity="0.15">
+    <text x="72" y="78">SCI-001</text>
+    <text x="400" y="78">v0.1</text>
+  </g>
+
+  <!-- Archetype label -->
+  <text x="256" y="370" font-family="monospace" font-size="28" fill="#00e5ff" text-anchor="middle" font-weight="bold" filter="url(#sc-neon)" letter-spacing="2">
+    SCIENTIST
+  </text>
+
+  <!-- Subtitle -->
+  <text x="256" y="400" font-family="monospace" font-size="13" fill="#00b8d4" text-anchor="middle" letter-spacing="3">
+    AGENT ARENA WORKSHOP
+  </text>
+
+  <!-- Separator -->
+  <line x1="156" y1="418" x2="356" y2="418" stroke="#00e5ff" stroke-width="1" opacity="0.2"/>
+  <!-- Animated scan line -->
+  <line x1="156" y1="418" x2="200" y2="418" stroke="#00e5ff" stroke-width="2" opacity="0.4">
+    <animate attributeName="x1" values="156;312;156" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="x2" values="200;356;200" dur="3s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Bottom text -->
+  <text x="256" y="450" font-family="monospace" font-size="9" fill="#00b8d4" text-anchor="middle" opacity="0.18" letter-spacing="1">
+    HYPOTHESIS. TEST. VERIFY.
+  </text>
+
+  <!-- Corner brackets -->
+  <g stroke="#00e5ff" stroke-width="1.2" fill="none" opacity="0.15">
+    <path d="M18 46 L18 18 L46 18"/>
+    <path d="M466 18 L494 18 L494 46"/>
+    <path d="M18 466 L18 494 L46 494"/>
+    <path d="M466 494 L494 494 L494 466"/>
+  </g>
+
+  <!-- Pulsing corner nodes -->
+  <circle cx="18" cy="18" r="2" fill="#00e5ff" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="494" cy="494" r="2" fill="#00e5ff" opacity="0.3">
+    <animate attributeName="opacity" values="0.1;0.3;0.1" dur="3s" repeatCount="indefinite"/>
+  </circle>
 </svg>

@@ -1,15 +1,157 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a0a0a"/>
-      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    <linearGradient id="hk-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020a02"/>
+      <stop offset="50%" stop-color="#081a08"/>
+      <stop offset="100%" stop-color="#021002"/>
     </linearGradient>
+    <radialGradient id="hk-glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#00ff41" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00ff41" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="hk-neon">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="hk-glow-filter">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Scanline pattern -->
+    <pattern id="hk-scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#00ff41" opacity="0.03"/>
+    </pattern>
+    <!-- Circuit pattern -->
+    <pattern id="hk-circuit" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M0 32h20m8 0h12m8 0h16" stroke="#00ff41" stroke-width="0.5" fill="none" opacity="0.08"/>
+      <path d="M32 0v16m0 8v12m0 8v20" stroke="#00ff41" stroke-width="0.5" fill="none" opacity="0.08"/>
+      <circle cx="24" cy="32" r="2" fill="#00ff41" opacity="0.1"/>
+      <circle cx="32" cy="20" r="2" fill="#00ff41" opacity="0.1"/>
+      <rect x="28" y="44" width="8" height="8" fill="none" stroke="#00ff41" stroke-width="0.5" opacity="0.06"/>
+    </pattern>
   </defs>
-  <rect width="512" height="512" rx="32" fill="url(#bg)"/>
-  <circle cx="256" cy="200" r="80" fill="#00ff41" opacity="0.15"/>
-  <circle cx="256" cy="200" r="60" fill="none" stroke="#00ff41" stroke-width="2"/>
-  <text x="256" y="215" font-family="monospace" font-size="48" fill="#00ff41" text-anchor="middle">&gt;_</text>
-  <text x="256" y="340" font-family="monospace" font-size="28" fill="#00ff41" text-anchor="middle" font-weight="bold">HACKER</text>
-  <text x="256" y="375" font-family="monospace" font-size="16" fill="#008f11" text-anchor="middle">Agent Arena Workshop</text>
-  <rect x="156" y="410" width="200" height="2" rx="1" fill="#00ff41" opacity="0.4"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="32" fill="url(#hk-bg)"/>
+  <rect width="512" height="512" rx="32" fill="url(#hk-glow)"/>
+  <rect width="512" height="512" rx="32" fill="url(#hk-scanlines)"/>
+  <rect width="512" height="512" rx="32" fill="url(#hk-circuit)"/>
+
+  <!-- Matrix rain columns -->
+  <g font-family="monospace" font-size="11" fill="#00ff41" opacity="0.12">
+    <text x="40" y="0"><tspan dy="14">0</tspan><tspan dy="14">1</tspan><tspan dy="14">F</tspan><tspan dy="14">A</tspan><tspan dy="14">0</tspan><tspan dy="14">x</tspan><tspan dy="14">7</tspan><tspan dy="14">E</tspan><tspan dy="14">3</tspan><tspan dy="14">B</tspan><tspan dy="14">9</tspan><tspan dy="14">1</tspan><tspan dy="14">C</tspan><tspan dy="14">0</tspan><tspan dy="14">5</tspan><tspan dy="14">D</tspan><tspan dy="14">2</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,60;0,0" dur="8s" repeatCount="indefinite"/>
+    </text>
+    <text x="90" y="-30"><tspan dy="14">x</tspan><tspan dy="14">4</tspan><tspan dy="14">2</tspan><tspan dy="14">0</tspan><tspan dy="14">B</tspan><tspan dy="14">C</tspan><tspan dy="14">1</tspan><tspan dy="14">9</tspan><tspan dy="14">A</tspan><tspan dy="14">F</tspan><tspan dy="14">3</tspan><tspan dy="14">E</tspan><tspan dy="14">7</tspan><tspan dy="14">8</tspan><tspan dy="14">D</tspan><tspan dy="14">6</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,45;0,0" dur="6s" repeatCount="indefinite"/>
+    </text>
+    <text x="140" y="-10"><tspan dy="14">E</tspan><tspan dy="14">8</tspan><tspan dy="14">0</tspan><tspan dy="14">x</tspan><tspan dy="14">D</tspan><tspan dy="14">5</tspan><tspan dy="14">A</tspan><tspan dy="14">1</tspan><tspan dy="14">F</tspan><tspan dy="14">3</tspan><tspan dy="14">7</tspan><tspan dy="14">C</tspan><tspan dy="14">9</tspan><tspan dy="14">2</tspan><tspan dy="14">B</tspan><tspan dy="14">4</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,55;0,0" dur="10s" repeatCount="indefinite"/>
+    </text>
+    <text x="370" y="-20"><tspan dy="14">7</tspan><tspan dy="14">F</tspan><tspan dy="14">0</tspan><tspan dy="14">A</tspan><tspan dy="14">3</tspan><tspan dy="14">x</tspan><tspan dy="14">B</tspan><tspan dy="14">9</tspan><tspan dy="14">1</tspan><tspan dy="14">C</tspan><tspan dy="14">E</tspan><tspan dy="14">4</tspan><tspan dy="14">D</tspan><tspan dy="14">2</tspan><tspan dy="14">8</tspan><tspan dy="14">6</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,50;0,0" dur="7s" repeatCount="indefinite"/>
+    </text>
+    <text x="420" y="-5"><tspan dy="14">C</tspan><tspan dy="14">2</tspan><tspan dy="14">9</tspan><tspan dy="14">E</tspan><tspan dy="14">0</tspan><tspan dy="14">5</tspan><tspan dy="14">x</tspan><tspan dy="14">A</tspan><tspan dy="14">3</tspan><tspan dy="14">F</tspan><tspan dy="14">1</tspan><tspan dy="14">B</tspan><tspan dy="14">7</tspan><tspan dy="14">4</tspan><tspan dy="14">D</tspan><tspan dy="14">8</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,40;0,0" dur="9s" repeatCount="indefinite"/>
+    </text>
+    <text x="470" y="-40"><tspan dy="14">3</tspan><tspan dy="14">A</tspan><tspan dy="14">8</tspan><tspan dy="14">1</tspan><tspan dy="14">D</tspan><tspan dy="14">F</tspan><tspan dy="14">0</tspan><tspan dy="14">x</tspan><tspan dy="14">5</tspan><tspan dy="14">B</tspan><tspan dy="14">E</tspan><tspan dy="14">2</tspan><tspan dy="14">C</tspan><tspan dy="14">9</tspan><tspan dy="14">7</tspan><tspan dy="14">4</tspan>
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,65;0,0" dur="11s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Horizontal circuit traces -->
+  <g stroke="#00ff41" fill="none" opacity="0.1">
+    <path d="M0 120h140 l10-10h30 l10 10h100" stroke-width="0.7"/>
+    <path d="M512 280h-120 l-10 10h-50 l-10-10h-80" stroke-width="0.7"/>
+    <path d="M0 390h80 l10-8h40 l10 8h60" stroke-width="0.5"/>
+    <circle cx="150" cy="120" r="3" fill="#00ff41" opacity="0.15"/>
+    <circle cx="392" cy="280" r="3" fill="#00ff41" opacity="0.15"/>
+  </g>
+
+  <!-- Center terminal window frame -->
+  <rect x="106" y="100" width="300" height="220" rx="8" fill="#000" stroke="#00ff41" stroke-width="1.5" opacity="0.6"/>
+  <rect x="106" y="100" width="300" height="24" rx="8" fill="#00ff41" opacity="0.08"/>
+  <!-- Window dots -->
+  <circle cx="122" cy="112" r="4" fill="#ff5f56" opacity="0.7"/>
+  <circle cx="136" cy="112" r="4" fill="#ffbd2e" opacity="0.7"/>
+  <circle cx="150" cy="112" r="4" fill="#27c93f" opacity="0.7"/>
+  <!-- Terminal title -->
+  <text x="256" y="116" font-family="monospace" font-size="10" fill="#00ff41" text-anchor="middle" opacity="0.5">root@arena:~</text>
+
+  <!-- Terminal content -->
+  <g font-family="monospace" font-size="13" fill="#00ff41">
+    <text x="120" y="148" opacity="0.5">$ whoami</text>
+    <text x="120" y="166" opacity="0.8">hacker_agent</text>
+    <text x="120" y="190" opacity="0.5">$ cat /etc/skills</text>
+    <text x="120" y="208" opacity="0.7" font-size="11">blockchain exploit dev</text>
+    <text x="120" y="224" opacity="0.7" font-size="11">smart contract audit</text>
+    <text x="120" y="248" opacity="0.5">$ status</text>
+    <text x="120" y="266" opacity="0.8" fill="#00ff41">ACCESS GRANTED</text>
+    <!-- Blinking cursor -->
+    <rect x="120" y="284" width="8" height="14" fill="#00ff41" opacity="0.9">
+      <animate attributeName="opacity" values="0.9;0;0.9" dur="1.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Center icon: >_ prompt (large, with glow) -->
+  <text x="256" y="220" font-family="monospace" font-size="0" fill="#00ff41" text-anchor="middle" opacity="0">
+    <!-- Hidden, terminal content serves as the main visual -->
+  </text>
+
+  <!-- Outer decorative ring -->
+  <circle cx="256" cy="210" r="140" fill="none" stroke="#00ff41" stroke-width="0.5" opacity="0.08" stroke-dasharray="8,12">
+    <animateTransform attributeName="transform" type="rotate" values="0 256 210;360 256 210" dur="60s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="256" cy="210" r="155" fill="none" stroke="#00ff41" stroke-width="0.3" opacity="0.05" stroke-dasharray="3,20">
+    <animateTransform attributeName="transform" type="rotate" values="360 256 210;0 256 210" dur="45s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Archetype label -->
+  <text x="256" y="370" font-family="monospace" font-size="32" fill="#00ff41" text-anchor="middle" font-weight="bold" filter="url(#hk-neon)">
+    HACKER
+  </text>
+
+  <!-- Subtitle -->
+  <text x="256" y="400" font-family="monospace" font-size="13" fill="#008f11" text-anchor="middle" letter-spacing="3">
+    AGENT ARENA WORKSHOP
+  </text>
+
+  <!-- Separator line -->
+  <line x1="156" y1="420" x2="356" y2="420" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+  <line x1="156" y1="420" x2="356" y2="420" stroke="#00ff41" stroke-width="2" opacity="0.15">
+    <animate attributeName="x1" values="156;200;156" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="x2" values="356;312;356" dur="4s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Bottom hash decoration -->
+  <text x="256" y="450" font-family="monospace" font-size="9" fill="#00ff41" text-anchor="middle" opacity="0.2">
+    0xA7E3B9F1C4D2...FUJI
+  </text>
+
+  <!-- Corner brackets -->
+  <path d="M16 48 L16 16 L48 16" stroke="#00ff41" stroke-width="1.5" fill="none" opacity="0.2"/>
+  <path d="M464 16 L496 16 L496 48" stroke="#00ff41" stroke-width="1.5" fill="none" opacity="0.2"/>
+  <path d="M16 464 L16 496 L48 496" stroke="#00ff41" stroke-width="1.5" fill="none" opacity="0.2"/>
+  <path d="M464 496 L496 496 L496 464" stroke="#00ff41" stroke-width="1.5" fill="none" opacity="0.2"/>
+
+  <!-- Pulsing corner nodes -->
+  <circle cx="16" cy="16" r="2" fill="#00ff41" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="496" cy="16" r="2" fill="#00ff41" opacity="0.4">
+    <animate attributeName="opacity" values="0.1;0.4;0.1" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="16" cy="496" r="2" fill="#00ff41" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="496" cy="496" r="2" fill="#00ff41" opacity="0.4">
+    <animate attributeName="opacity" values="0.1;0.4;0.1" dur="4s" repeatCount="indefinite"/>
+  </circle>
 </svg>

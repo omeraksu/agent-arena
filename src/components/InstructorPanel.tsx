@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { sendBroadcast, setFreeze, getWorkshopStats, endWorkshop, exportSession, resetSession, finalizeMeme, getSignalPulse, startPulseRound, createWorkshop, startWorkshop, getLobbyStatus, resetLobby, type SignalPulseRound } from "@/lib/api";
+import { sendBroadcast, setFreeze, getWorkshopStats, endWorkshop, exportSession, resetSession, finalizeMeme, getSignalPulse, startPulseRound, createWorkshop, startWorkshop, getLobbyStatus, resetLobby, generateFragments, type SignalPulseRound } from "@/lib/api";
 
 export default function InstructorPanel() {
   const [password, setPassword] = useState("");
@@ -335,6 +335,28 @@ export default function InstructorPanel() {
             className="cyber-btn w-full py-1.5 text-xs text-[var(--neon-pink)] border-[var(--neon-pink)]/30 hover:bg-[var(--neon-pink)]/10"
           >
             MINT_WINNER
+          </button>
+        </div>
+
+        {/* Treasure Hunt */}
+        <div className="cyber-card p-4 space-y-3">
+          <h2 className="font-mono-data text-sm font-bold text-[var(--neon-yellow)]">TREASURE_HUNT</h2>
+          <p className="font-mono-data text-[10px] text-gray-500">
+            Her agentin profiline fragment yerlestir. Ogrenciler 3 farkli fragment toplayarak odul kazanir.
+          </p>
+          <button
+            onClick={async () => {
+              addLog("Fragment'lar olusturuluyor...");
+              const result = await generateFragments(password);
+              if (result.ok) {
+                addLog(`${result.fragmentCount} fragment olusturuldu!`);
+              } else {
+                addLog("Fragment hatasi: " + (result.error || ""));
+              }
+            }}
+            className="cyber-btn w-full py-1.5 text-xs text-[var(--neon-yellow)] border-[var(--neon-yellow)]/30 hover:bg-[var(--neon-yellow)]/10"
+          >
+            GENERATE_FRAGMENTS
           </button>
         </div>
 

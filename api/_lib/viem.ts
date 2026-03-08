@@ -1,8 +1,7 @@
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { avalancheFuji } from "viem/chains";
-
-const RPC_URL = "https://api.avax-test.network/ext/bc/C/rpc";
+import { RPC_URL } from "./brand.js";
 
 export const publicClient = createPublicClient({
   chain: avalancheFuji,

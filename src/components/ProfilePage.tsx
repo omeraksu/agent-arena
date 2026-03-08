@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
 import { client, wallets, chain } from "@/lib/thirdweb";
-import { getActivity, getNftsByAddress, generateRecap, type ActivityEvent, type NftRecord, type OracleRecap } from "@/lib/api";
+import { getActivity, getNftsByAddress, generateRecap, getTreasureStatus, type ActivityEvent, type NftRecord, type OracleRecap, type TreasureStatus } from "@/lib/api";
 import { EXPLORER_TX_URL, EXPLORER_ADDRESS_URL } from "@/config/constants";
+import { computeBadgeStatuses, type BadgeStatus } from "@/config/badges";
+import BadgeGrid from "./BadgeGrid";
 
 function shortenAddr(addr: string) {
   return `${addr.slice(0, 6)}..${addr.slice(-4)}`;
@@ -18,6 +20,8 @@ export default function ProfilePage() {
   const [recapLoading, setRecapLoading] = useState(false);
   const [recapError, setRecapError] = useState<string | null>(null);
   const [workshopEnded, setWorkshopEnded] = useState(false);
+  const [badgeStatuses, setBadgeStatuses] = useState<BadgeStatus[]>([]);
+  const [treasure, setTreasure] = useState<TreasureStatus | null>(null);
 
   useEffect(() => {
     if (!account) return;
@@ -26,9 +30,12 @@ export default function ProfilePage() {
         if (all.some((e) => e.type === "workshop_ended")) {
           setWorkshopEnded(true);
         }
-        return all.filter((e) => e.address.toLowerCase() === account.address.toLowerCase());
+        const mine = all.filter((e) => e.address.toLowerCase() === account.address.toLowerCase());
+        setBadgeStatuses(computeBadgeStatuses(mine));
+        return mine;
       }),
       getNftsByAddress(account.address),
+      getTreasureStatus(account.address).then(setTreasure),
     ])
       .then(([mine, nftData]) => {
         setEvents(mine);
@@ -89,7 +96,7 @@ export default function ProfilePage() {
             rel="noopener noreferrer"
             className="font-mono-data text-[10px] text-gray-500 hover:text-[var(--neon-blue)] transition-colors"
           >
-            VIEW_ON_ETHERSCAN
+            VIEW_ON_SNOWTRACE
           </a>
         </div>
       </div>
@@ -115,6 +122,7 @@ export default function ProfilePage() {
               nft.archetype === "pirate" ? "var(--neon-yellow)" :
               nft.archetype === "scientist" ? "var(--neon-pink)" :
               nft.archetype === "glitch" ? "var(--neon-purple)" :
+              nft.archetype === "architect" ? "var(--neon-orange, #ff8c00)" :
               "var(--neon-green)";
             return (
               <div key={nft.token_id} className="cyber-card p-4 space-y-3" style={{ borderColor: `${archColor}33` }}>
@@ -137,7 +145,8 @@ export default function ProfilePage() {
                        nft.archetype === "sage" ? "∞" :
                        nft.archetype === "pirate" ? "☠" :
                        nft.archetype === "scientist" ? "⚗" :
-                       nft.archetype === "glitch" ? "▓" : "◆"}
+                       nft.archetype === "glitch" ? "▓" :
+                       nft.archetype === "architect" ? "⌂" : "◆"}
                     </span>
                   </div>
                 ) : null}
@@ -163,6 +172,11 @@ export default function ProfilePage() {
                       {nft.extra_attributes.special_trait}
                     </span>
                   )}
+                  {nft.extra_attributes?.level && (
+                    <span className="font-mono-data text-[9px] text-[var(--neon-purple)] px-2 py-0.5 rounded border border-[var(--neon-purple)]/30">
+                      {"★".repeat(Number(nft.extra_attributes.level))} LVL {nft.extra_attributes.level}
+                    </span>
+                  )}
                   <span className="font-mono-data text-[9px] text-gray-600 px-2 py-0.5 rounded border border-gray-800">
                     #{nft.token_id}
                   </span>
@@ -172,6 +186,38 @@ export default function ProfilePage() {
           })}
         </div>
       )}
+
+      {/* Treasure Hunt */}
+      {treasure && treasure.count > 0 && (
+        <div className="cyber-card p-4 space-y-2" style={{ borderColor: "rgba(255,215,0,0.15)" }}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🗺️</span>
+            <h2 className="font-mono-data text-sm font-bold text-[var(--neon-yellow)]">
+              FRAGMENT_HUNT [{treasure.count}/{treasure.needed}]
+            </h2>
+            {treasure.hasRedeemed && (
+              <span className="ml-auto font-mono-data text-[10px] text-[var(--neon-green)] border border-[var(--neon-green)]/30 px-2 py-0.5 rounded">
+                Master Scout
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {treasure.collected.map((f) => (
+              <div
+                key={f.id}
+                className="flex-1 cyber-card p-2 text-center"
+                style={{ borderColor: "rgba(255,215,0,0.1)" }}
+              >
+                <p className="font-mono-data text-[10px] font-bold text-[var(--neon-yellow)]">{f.fragment_code}</p>
+                <p className="font-mono-data text-[8px] text-gray-600">{f.owner_agent}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Badges */}
+      {badgeStatuses.length > 0 && <BadgeGrid statuses={badgeStatuses} />}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">

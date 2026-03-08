@@ -1,15 +1,135 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a0a00"/>
-      <stop offset="100%" style="stop-color:#2e1a00"/>
+    <linearGradient id="pi-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0800"/>
+      <stop offset="50%" stop-color="#1a1000"/>
+      <stop offset="100%" stop-color="#0d0a02"/>
     </linearGradient>
+    <radialGradient id="pi-glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffab00" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffab00" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="pi-neon">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Map grid pattern -->
+    <pattern id="pi-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0L0 0 0 48" fill="none" stroke="#ffab00" stroke-width="0.3" opacity="0.06"/>
+    </pattern>
   </defs>
-  <rect width="512" height="512" rx="32" fill="url(#bg)"/>
-  <circle cx="256" cy="200" r="80" fill="#ffab00" opacity="0.15"/>
-  <circle cx="256" cy="200" r="60" fill="none" stroke="#ffab00" stroke-width="2"/>
-  <text x="256" y="220" font-family="serif" font-size="64" fill="#ffab00" text-anchor="middle">&#x2620;</text>
-  <text x="256" y="340" font-family="serif" font-size="28" fill="#ffab00" text-anchor="middle" font-weight="bold">PIRATE</text>
-  <text x="256" y="375" font-family="sans-serif" font-size="16" fill="#ff8f00" text-anchor="middle">Agent Arena Workshop</text>
-  <rect x="156" y="410" width="200" height="2" rx="1" fill="#ffab00" opacity="0.4"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="32" fill="url(#pi-bg)"/>
+  <rect width="512" height="512" rx="32" fill="url(#pi-glow)"/>
+  <rect width="512" height="512" rx="32" fill="url(#pi-grid)"/>
+
+  <!-- Wave decoration at bottom -->
+  <g opacity="0.08">
+    <path d="M0 460 Q30 445 60 460 Q90 475 120 460 Q150 445 180 460 Q210 475 240 460 Q270 445 300 460 Q330 475 360 460 Q390 445 420 460 Q450 475 480 460 Q510 445 512 450" fill="none" stroke="#ffab00" stroke-width="1">
+      <animate attributeName="d" values="M0 460 Q30 445 60 460 Q90 475 120 460 Q150 445 180 460 Q210 475 240 460 Q270 445 300 460 Q330 475 360 460 Q390 445 420 460 Q450 475 480 460 Q510 445 512 450;M0 460 Q30 475 60 460 Q90 445 120 460 Q150 475 180 460 Q210 445 240 460 Q270 475 300 460 Q330 445 360 460 Q390 475 420 460 Q450 445 480 460 Q510 475 512 460;M0 460 Q30 445 60 460 Q90 475 120 460 Q150 445 180 460 Q210 475 240 460 Q270 445 300 460 Q330 475 360 460 Q390 445 420 460 Q450 475 480 460 Q510 445 512 450" dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0 475 Q30 460 60 475 Q90 490 120 475 Q150 460 180 475 Q210 490 240 475 Q270 460 300 475 Q330 490 360 475 Q390 460 420 475 Q450 490 480 475 Q510 460 512 470" fill="none" stroke="#ffab00" stroke-width="0.7">
+      <animate attributeName="d" values="M0 475 Q30 460 60 475 Q90 490 120 475 Q150 460 180 475 Q210 490 240 475 Q270 460 300 475 Q330 490 360 475 Q390 460 420 475 Q450 490 480 475 Q510 460 512 470;M0 475 Q30 490 60 475 Q90 460 120 475 Q150 490 180 475 Q210 460 240 475 Q270 490 300 475 Q330 460 360 475 Q390 490 420 475 Q450 460 480 475 Q510 490 512 480;M0 475 Q30 460 60 475 Q90 490 120 475 Q150 460 180 475 Q210 490 240 475 Q270 460 300 475 Q330 490 360 475 Q390 460 420 475 Q450 490 480 475 Q510 460 512 470" dur="8s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Compass rose (large, decorative) -->
+  <g transform="translate(256,210)" stroke="#ffab00" fill="none" opacity="0.12">
+    <!-- Outer compass circle -->
+    <circle r="140" stroke-width="0.5" stroke-dasharray="4,8">
+      <animateTransform attributeName="transform" type="rotate" values="0;360" dur="120s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="125" stroke-width="0.3" stroke-dasharray="2,12">
+      <animateTransform attributeName="transform" type="rotate" values="360;0" dur="90s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Compass degree marks -->
+    <g stroke-width="0.4" opacity="0.6">
+      <line y1="-108" y2="-115"/><line y1="108" y2="115"/>
+      <line x1="-108" x2="-115"/><line x1="108" x2="115"/>
+      <line y1="-108" y2="-112" transform="rotate(45)"/>
+      <line y1="-108" y2="-112" transform="rotate(135)"/>
+      <line y1="-108" y2="-112" transform="rotate(225)"/>
+      <line y1="-108" y2="-112" transform="rotate(315)"/>
+    </g>
+    <!-- Cardinal direction labels -->
+    <text y="-96" font-family="monospace" font-size="10" fill="#ffab00" text-anchor="middle" opacity="0.3">N</text>
+    <text y="104" font-family="monospace" font-size="10" fill="#ffab00" text-anchor="middle" opacity="0.3">S</text>
+    <text x="-98" y="4" font-family="monospace" font-size="10" fill="#ffab00" text-anchor="middle" opacity="0.3">W</text>
+    <text x="98" y="4" font-family="monospace" font-size="10" fill="#ffab00" text-anchor="middle" opacity="0.3">E</text>
+  </g>
+
+  <!-- Inner compass star (directional) -->
+  <g transform="translate(256,210)" fill="#ffab00" stroke="#ffab00">
+    <!-- Main compass diamond points -->
+    <polygon points="0,-70 8,-15 0,-5 -8,-15" fill="#ffab00" opacity="0.2"/>
+    <polygon points="0,70 8,15 0,5 -8,15" fill="#c77f00" opacity="0.15"/>
+    <polygon points="-70,0 -15,8 -5,0 -15,-8" fill="#c77f00" opacity="0.15"/>
+    <polygon points="70,0 15,8 5,0 15,-8" fill="#c77f00" opacity="0.15"/>
+    <!-- Diagonal points (smaller) -->
+    <polygon points="0,-50 5,-12 0,-8 -5,-12" fill="#ffab00" opacity="0.1" transform="rotate(45)"/>
+    <polygon points="0,50 5,12 0,8 -5,12" fill="#ffab00" opacity="0.1" transform="rotate(45)"/>
+    <polygon points="0,-50 5,-12 0,-8 -5,-12" fill="#ffab00" opacity="0.1" transform="rotate(-45)"/>
+    <polygon points="0,50 5,12 0,8 -5,12" fill="#ffab00" opacity="0.1" transform="rotate(-45)"/>
+    <!-- Center circle -->
+    <circle r="18" fill="#0a0800" stroke="#ffab00" stroke-width="1.5" opacity="0.8"/>
+    <circle r="10" fill="none" stroke="#ffab00" stroke-width="0.5" opacity="0.4"/>
+    <!-- Skull icon in center -->
+    <circle cy="-2" r="7" fill="#ffab00" opacity="0.25"/>
+    <rect x="-5" y="3" width="10" height="5" rx="1" fill="#ffab00" opacity="0.2"/>
+    <!-- Skull eyes -->
+    <circle cx="-2.5" cy="-3" r="1.5" fill="#0a0800"/>
+    <circle cx="2.5" cy="-3" r="1.5" fill="#0a0800"/>
+    <!-- Pulse -->
+    <circle r="18" fill="none" stroke="#ffab00" stroke-width="0.5" opacity="0.3">
+      <animate attributeName="r" values="18;24;18" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Coordinate marks on edges -->
+  <g font-family="monospace" font-size="8" fill="#ffab00" opacity="0.12">
+    <text x="20" y="80">36.8N</text>
+    <text x="430" y="80">34.2E</text>
+    <text x="20" y="440">LAT: --</text>
+    <text x="415" y="440">LON: --</text>
+  </g>
+
+  <!-- Dotted treasure trail -->
+  <path d="M120 320 L160 300 L200 310 L230 280" fill="none" stroke="#ffab00" stroke-width="1" stroke-dasharray="3,6" opacity="0.12"/>
+  <text x="110" y="330" font-family="monospace" font-size="14" fill="#ffab00" opacity="0.15">X</text>
+
+  <!-- Archetype label -->
+  <text x="256" y="370" font-family="monospace" font-size="32" fill="#ffab00" text-anchor="middle" font-weight="bold" filter="url(#pi-neon)">
+    PIRATE
+  </text>
+
+  <!-- Subtitle -->
+  <text x="256" y="400" font-family="monospace" font-size="13" fill="#c77f00" text-anchor="middle" letter-spacing="3">
+    AGENT ARENA WORKSHOP
+  </text>
+
+  <!-- Separator -->
+  <line x1="176" y1="418" x2="336" y2="418" stroke="#ffab00" stroke-width="1" opacity="0.2"/>
+  <!-- Anchor dot -->
+  <g transform="translate(256,418)" fill="#ffab00" opacity="0.3">
+    <circle r="2"/>
+    <line y1="2" y2="6" stroke="#ffab00" stroke-width="0.8"/>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="256" y="452" font-family="monospace" font-size="9" fill="#c77f00" text-anchor="middle" opacity="0.2" letter-spacing="1">
+    SAIL THE BLOCKCHAIN SEAS
+  </text>
+
+  <!-- Corner brackets -->
+  <g stroke="#ffab00" stroke-width="1.2" fill="none" opacity="0.15">
+    <path d="M18 46 L18 18 L46 18"/>
+    <path d="M466 18 L494 18 L494 46"/>
+    <path d="M18 466 L18 494 L46 494"/>
+    <path d="M466 494 L494 494 L494 466"/>
+  </g>
 </svg>

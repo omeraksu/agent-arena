@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAgents, sendAgentMessage, type AgentRecord } from "@/lib/api";
+import { useActiveAccount } from "thirdweb/react";
+import { getAgents, sendAgentMessage, collectFragment, getTreasureStatus, redeemFragments, type AgentRecord, type TreasureStatus } from "@/lib/api";
+import { getPresenceChannel, trackPresence } from "@/lib/supabase";
 
 const ARCHETYPE_COLORS: Record<string, string> = {
   hacker: "var(--neon-green)",
@@ -8,6 +10,7 @@ const ARCHETYPE_COLORS: Record<string, string> = {
   pirate: "var(--neon-yellow)",
   scientist: "var(--neon-blue)",
   glitch: "var(--neon-pink)",
+  architect: "var(--neon-orange, #ff8c00)",
 };
 
 const ARCHETYPE_NAMES: Record<string, string> = {
@@ -16,15 +19,56 @@ const ARCHETYPE_NAMES: Record<string, string> = {
   pirate: "DATA KORSAN",
   scientist: "LAB SCIENTIST",
   glitch: "GLITCH AI",
+  architect: "CHAIN ARCHITECT",
 };
 
 export default function AgentDiscovery() {
+  const account = useActiveAccount();
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [msgTarget, setMsgTarget] = useState<string | null>(null);
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
+  const [onlineAgents, setOnlineAgents] = useState<Set<string>>(new Set());
+  const [treasure, setTreasure] = useState<TreasureStatus | null>(null);
+  const [collecting, setCollecting] = useState<string | null>(null);
+  const [collectMsg, setCollectMsg] = useState<{ agent: string; text: string; ok: boolean } | null>(null);
+
+  // Presence tracking
+  useEffect(() => {
+    const channel = getPresenceChannel();
+    if (!channel) return;
+
+    const syncPresence = () => {
+      const state = channel.presenceState();
+      const names = new Set<string>();
+      for (const presences of Object.values(state)) {
+        for (const p of presences) {
+          if (p.agent_name) names.add(p.agent_name);
+        }
+      }
+      setOnlineAgents(names);
+    };
+
+    channel.on("presence", { event: "sync" }, syncPresence);
+    channel.subscribe();
+
+    // Track own agent if configured
+    const myConfig = localStorage.getItem("arena_agent_config");
+    if (myConfig) {
+      try {
+        const parsed = JSON.parse(myConfig);
+        if (parsed.name && parsed.archetype) {
+          trackPresence(parsed.name, parsed.archetype);
+        }
+      } catch { /* ignore */ }
+    }
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     loadAgents();
@@ -32,10 +76,40 @@ export default function AgentDiscovery() {
     return () => clearInterval(interval);
   }, []);
 
+  // Load treasure status
+  useEffect(() => {
+    if (!account) return;
+    getTreasureStatus(account.address).then(setTreasure);
+  }, [account]);
+
   async function loadAgents() {
     const data = await getAgents();
     setAgents(data);
     setLoading(false);
+  }
+
+  async function handleCollect(agentName: string) {
+    if (!account) return;
+    setCollecting(agentName);
+    setCollectMsg(null);
+    const result = await collectFragment(account.address, agentName);
+    setCollecting(null);
+    if (result.ok) {
+      setCollectMsg({ agent: agentName, text: `Fragment: ${result.fragmentCode}`, ok: true });
+      // Refresh treasure status
+      getTreasureStatus(account.address).then(setTreasure);
+    } else {
+      setCollectMsg({ agent: agentName, text: result.error || "Hata", ok: false });
+    }
+    setTimeout(() => setCollectMsg(null), 4000);
+  }
+
+  async function handleRedeem() {
+    if (!account || !treasure?.canRedeem) return;
+    const result = await redeemFragments(account.address);
+    if (result.ok) {
+      getTreasureStatus(account.address).then(setTreasure);
+    }
   }
 
   async function handleSend(targetAgent: string) {
@@ -73,9 +147,42 @@ export default function AgentDiscovery() {
           AGENT_NETWORK
         </h1>
         <span className="font-mono-data text-[10px] text-gray-600">
-          // {agents.length} aktif ajan
+          // {agents.length} ajan {onlineAgents.size > 0 && <span className="text-[var(--neon-green)]">({onlineAgents.size} online)</span>}
         </span>
       </div>
+
+      {/* Treasure Hunt Status */}
+      {treasure && treasure.count > 0 && (
+        <div className="cyber-card p-3 flex items-center gap-3" style={{ borderColor: "rgba(255,215,0,0.2)" }}>
+          <span className="text-lg">🗺️</span>
+          <div className="flex-1">
+            <p className="font-mono-data text-[10px] text-[var(--neon-yellow)] font-bold">
+              FRAGMENT HUNT — {treasure.count}/{treasure.needed}
+            </p>
+            <div className="flex gap-1 mt-1">
+              {Array.from({ length: treasure.needed }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    i < treasure.count ? "bg-[var(--neon-yellow)]" : "bg-gray-800"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          {treasure.canRedeem && !treasure.hasRedeemed && (
+            <button
+              onClick={handleRedeem}
+              className="cyber-btn px-3 py-1.5 font-mono-data text-[10px] font-bold text-black bg-[var(--neon-yellow)]"
+            >
+              ODUL AL
+            </button>
+          )}
+          {treasure.hasRedeemed && (
+            <span className="font-mono-data text-[10px] text-[var(--neon-green)]">Master Scout!</span>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-20">
@@ -117,8 +224,9 @@ export default function AgentDiscovery() {
                 {/* Header */}
                 <div className="flex items-center gap-2">
                   <div
-                    className="h-2 w-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: color }}
+                    className={`h-2 w-2 rounded-full ${onlineAgents.has(agent.agent_name) ? "animate-pulse" : ""}`}
+                    style={{ backgroundColor: onlineAgents.has(agent.agent_name) ? color : "#374151" }}
+                    title={onlineAgents.has(agent.agent_name) ? "Online" : "Offline"}
                   />
                   <span
                     className="font-mono-data text-lg font-bold tracking-wider"
@@ -194,6 +302,23 @@ export default function AgentDiscovery() {
                   >
                     {">"} MESAJ GÖNDER
                   </button>
+                )}
+
+                {/* Fragment Collect */}
+                {account && agent.owner_address.toLowerCase() !== account.address.toLowerCase() && (
+                  collectMsg?.agent === agent.agent_name ? (
+                    <div className={`font-mono-data text-[10px] text-center py-1 ${collectMsg.ok ? "text-[var(--neon-yellow)]" : "text-red-400"}`}>
+                      {collectMsg.text}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleCollect(agent.agent_name)}
+                      disabled={collecting === agent.agent_name}
+                      className="w-full font-mono-data text-[10px] text-[var(--neon-yellow)] hover:text-white transition-colors py-1 border border-[var(--neon-yellow)]/20 hover:border-[var(--neon-yellow)]/50 disabled:opacity-30"
+                    >
+                      {collecting === agent.agent_name ? "..." : "🗺️ FRAGMENT TOPLA"}
+                    </button>
+                  )
                 )}
               </div>
             );

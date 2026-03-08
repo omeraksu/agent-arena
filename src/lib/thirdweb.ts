@@ -1,10 +1,13 @@
 import { createThirdwebClient } from "thirdweb";
 import { inAppWallet } from "thirdweb/wallets";
-import { avalancheFuji } from "thirdweb/chains";
+import { defineChain } from "thirdweb/chains";
+import { brand } from "@/config/brand";
 
 export const client = createThirdwebClient({
   clientId: import.meta.env.VITE_THIRDWEB_CLIENT_ID || "demo-client-id",
 });
+
+export const chain = defineChain(brand.chainId);
 
 export const wallets = [
   inAppWallet({
@@ -12,10 +15,8 @@ export const wallets = [
       options: ["email", "google"],
     },
     smartAccount: {
-      chain: avalancheFuji,
+      chain,
       sponsorGas: true,
     },
   }),
 ];
-
-export const chain = avalancheFuji;

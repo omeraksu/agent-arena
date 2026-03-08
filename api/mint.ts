@@ -34,6 +34,7 @@ async function saveNftMetadata(
     draftDescription?: string;
     draftSpecialTrait?: string;
     draftImageUrl?: string;
+    level?: number;
   },
 ) {
   const arch = opts.archetype || "default";
@@ -54,6 +55,9 @@ async function saveNftMetadata(
   const extraAttributes: Record<string, unknown> = {};
   if (opts.draftSpecialTrait) {
     extraAttributes.special_trait = opts.draftSpecialTrait;
+  }
+  if (opts.level) {
+    extraAttributes.level = String(opts.level);
   }
 
   await supabase.from("nft_metadata").upsert({
@@ -95,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { address, archetype, agentName, arenaName, draftName, draftDescription, draftSpecialTrait, draftImageUrl } = req.body;
+  const { address, archetype, agentName, arenaName, draftName, draftDescription, draftSpecialTrait, draftImageUrl, level } = req.body;
   if (!address || typeof address !== "string" || !address.startsWith("0x")) {
     return res.status(400).json({ error: "Geçersiz adres" });
   }
@@ -146,6 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         draftDescription,
         draftSpecialTrait,
         draftImageUrl,
+        level,
       });
     }
 
@@ -199,6 +204,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         draftDescription,
         draftSpecialTrait,
         draftImageUrl,
+        level,
       });
     }
 

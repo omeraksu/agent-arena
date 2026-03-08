@@ -6,11 +6,14 @@
   --neon-purple: #bf5fff;
   --neon-pink: #ff2d7c;
   --neon-yellow: #ffe156;
+  --neon-orange: #ff8c00;
   --bg-dark: #07080f;
   --bg-card: #0d0f1a;
   --bg-card-hover: #141729;
   --border-dim: rgba(0, 255, 170, 0.1);
   --border-glow: rgba(0, 255, 170, 0.3);
+  --brand-color: #E84142;
+  --brand-color-rgb: 232, 65, 66;
 }
 
 body {
@@ -57,6 +60,7 @@ body::after {
 .glow-purple { box-shadow: 0 0 15px rgba(191, 95, 255, 0.15), inset 0 0 15px rgba(191, 95, 255, 0.03); border-color: rgba(191, 95, 255, 0.3); }
 .glow-pink { box-shadow: 0 0 15px rgba(255, 45, 124, 0.15), inset 0 0 15px rgba(255, 45, 124, 0.03); border-color: rgba(255, 45, 124, 0.03); }
 .glow-yellow { box-shadow: 0 0 15px rgba(255, 225, 86, 0.15), inset 0 0 15px rgba(255, 225, 86, 0.03); border-color: rgba(255, 225, 86, 0.3); }
+.glow-orange { box-shadow: 0 0 15px rgba(255, 140, 0, 0.15), inset 0 0 15px rgba(255, 140, 0, 0.03); border-color: rgba(255, 140, 0, 0.3); }
 
 /* Neon button */
 .cyber-btn {

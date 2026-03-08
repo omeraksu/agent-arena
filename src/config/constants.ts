@@ -1,9 +1,12 @@
-// Avalanche Fuji Testnet
-export const CHAIN_ID = 43113;
-export const RPC_URL = "https://api.avax-test.network/ext/bc/C/rpc";
-export const EXPLORER_TX_URL = "https://testnet.snowtrace.io/tx/";
-export const EXPLORER_ADDRESS_URL = "https://testnet.snowtrace.io/address/";
-export const NETWORK_NAME = "Avalanche Fuji";
+import { brand } from "./brand";
+
+// Chain config — brand'den alınır
+export const CHAIN_ID = brand.chainId;
+export const RPC_URL = brand.rpcUrl;
+export const EXPLORER_TX_URL = brand.explorerTxUrl;
+export const EXPLORER_ADDRESS_URL = brand.explorerAddressUrl;
+export const NETWORK_NAME = brand.networkName;
+export const TOKEN_SYMBOL = brand.tokenSymbol;
 
 export const POLL_INTERVAL = 5000;
 export const SESSION_RESET_POLL_INTERVAL = 10000;
@@ -68,7 +71,3 @@ export const POST_MINT_QUIZ = [
 export const SIGNAL_COUNTDOWN_MS = 5000;
 export const SIGNAL_ROUND_DURATION_MS = 30000;
 export const SIGNAL_ROUND_RATE_LIMIT_MS = 1000;
-
-// ─── Energy System ───
-export const ENERGY_MAX = 999999;
-export const ENERGY_QUIZ_BONUS = 999999;

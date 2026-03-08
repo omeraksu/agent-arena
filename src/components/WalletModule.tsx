@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ConnectButton, useActiveAccount, useWalletBalance } from "thirdweb/react";
 import { client, wallets, chain } from "@/lib/thirdweb";
 import { requestFaucet, postActivity, registerName } from "@/lib/api";
-import { EXPLORER_ADDRESS_URL } from "@/config/constants";
+import { EXPLORER_ADDRESS_URL, TOKEN_SYMBOL } from "@/config/constants";
 import { useArena } from "@/contexts/ArenaContext";
 import TransferForm from "./TransferForm";
 
@@ -33,16 +33,16 @@ function getZeroMessages(step: number, hasBalance: boolean, arenaName?: string |
     case 3:
       return hasBalance
         ? [
-            `Güzel, ${greeting}! Cüzdanında zaten AVAX var 🔋`,
+            `Güzel, ${greeting}! Cüzdanında zaten ${TOKEN_SYMBOL} var 🔋`,
             "İstersen daha fazla al, ya da direkt transfer'e geç.",
           ]
         : [
             `${greeting}, cüzdanın hazır ama boş...`,
-            "Test AVAX al — gerçek para değil, pratik için. Gas ücretini biz ödüyoruz 😎",
+            `Test ${TOKEN_SYMBOL} al — gerçek para değil, pratik için. Gas ücretini biz ödüyoruz 😎`,
           ];
     case 4:
       return [
-        `Son görev ${greeting}! Arkadaşına AVAX gönder.`,
+        `Son görev ${greeting}! Arkadaşına ${TOKEN_SYMBOL} gönder.`,
         "Adresini veya .arena ismini yaz, miktarı gir, gönder!",
       ];
     case 5:
@@ -550,7 +550,7 @@ export default function WalletModule() {
   const [unlockedStep, setUnlockedStep] = useState(0);
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [faucetMsg, setFaucetMsg] = useState("");
-  const [faucetUsed, setFaucetUsed] = useState(false);
+  const [faucetUsed, setFaucetUsed] = useState(() => localStorage.getItem("arena_faucet_used") === "1");
   const [transferDone, setTransferDone] = useState(false);
   const [achievement, setAchievement] = useState<string | null>(null);
 
@@ -626,18 +626,21 @@ export default function WalletModule() {
     }
   }
 
+  const faucetInFlight = useRef(false);
   async function handleFaucet() {
-    if (!account) return;
+    if (!account || faucetInFlight.current) return;
+    faucetInFlight.current = true;
     setFaucetLoading(true);
     setFaucetMsg("");
     try {
       const res = await requestFaucet(account.address);
       if (res.txHash) {
-        setFaucetMsg("Test AVAX gönderildi!");
+        setFaucetMsg(`Test ${TOKEN_SYMBOL} gönderildi!`);
         setFaucetUsed(true);
+        localStorage.setItem("arena_faucet_used", "1");
         setUnlockedStep((prev) => Math.max(prev, 4));
         addCompletedType("faucet");
-        showAchievement("Test AVAX Alındı — Enerji Yüklendi!");
+        showAchievement(`Test ${TOKEN_SYMBOL} Alındı — Enerji Yüklendi!`);
         await postActivity({
           type: "faucet",
           address: account.address,
@@ -650,6 +653,7 @@ export default function WalletModule() {
       setFaucetMsg("Bağlantı hatası");
     } finally {
       setFaucetLoading(false);
+      faucetInFlight.current = false;
     }
   }
 
@@ -724,15 +728,15 @@ export default function WalletModule() {
             <p className="font-mono-data text-[10px] text-gray-600 mb-1">BALANCE</p>
             <p className="font-mono-data text-3xl font-bold text-white">
               {balanceLoading ? "..." : Number(balance?.displayValue || 0).toFixed(4)}
-              <span className="text-sm text-gray-500 ml-2">AVAX</span>
+              <span className="text-sm text-gray-500 ml-2">{TOKEN_SYMBOL}</span>
             </p>
           </div>
           <button
             onClick={handleFaucet}
-            disabled={faucetLoading}
+            disabled={faucetLoading || faucetUsed}
             className="cyber-btn w-full bg-[var(--neon-yellow)] px-4 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(255,225,86,0.3)] disabled:opacity-50"
           >
-            {faucetLoading ? "SENDING..." : "> REQUEST_TEST_ETH"}
+            {faucetLoading ? "SENDING..." : faucetUsed ? `✓ ${TOKEN_SYMBOL}_RECEIVED` : `> REQUEST_TEST_${TOKEN_SYMBOL}`}
           </button>
           {faucetMsg && (
             <p className="font-mono-data text-xs text-center text-[var(--neon-green)]">{faucetMsg}</p>
@@ -929,22 +933,22 @@ export default function WalletModule() {
               {balanceLoading
                 ? "..."
                 : Number(balance?.displayValue || 0).toFixed(4)}
-              <span className="text-sm text-gray-500 ml-2">AVAX</span>
+              <span className="text-sm text-gray-500 ml-2">{TOKEN_SYMBOL}</span>
             </p>
           </div>
 
           {!hasBalance && !faucetUsed && (
             <p className="font-mono-data text-xs text-gray-500">
-              Cüzdanın boş — test AVAX al. Bu gerçek para değil, workshop için kullanıyoruz.
+              Cüzdanın boş — test {TOKEN_SYMBOL} al. Bu gerçek para değil, workshop için kullanıyoruz.
             </p>
           )}
 
           <button
             onClick={handleFaucet}
-            disabled={faucetLoading}
+            disabled={faucetLoading || faucetUsed}
             className="cyber-btn w-full bg-[var(--neon-yellow)] px-4 py-3 font-mono-data text-sm font-bold text-black hover:shadow-[0_0_20px_rgba(255,225,86,0.3)] disabled:opacity-50"
           >
-            {faucetLoading ? "SENDING..." : "> REQUEST_TEST_ETH"}
+            {faucetLoading ? "SENDING..." : faucetUsed ? `✓ ${TOKEN_SYMBOL}_RECEIVED` : `> REQUEST_TEST_${TOKEN_SYMBOL}`}
           </button>
           {faucetMsg && (
             <p className="font-mono-data text-xs text-center text-[var(--neon-green)]">{faucetMsg}</p>
@@ -980,14 +984,14 @@ export default function WalletModule() {
           </div>
           {!transferDone && (
             <p className="font-mono-data text-xs text-gray-500 px-1 mb-2">
-              Arkadaşının .arena ismini veya 0x adresini gir, AVAX gönder. Aracı yok!
+              Arkadaşının .arena ismini veya 0x adresini gir, {TOKEN_SYMBOL} gönder. Aracı yok!
             </p>
           )}
           <TransferForm senderAddress={account.address} onSuccess={handleTransferSuccess} />
         </div>
       ) : (
         step < 4 &&
-        step >= 3 && <LockedCard label="Transfer Gönder" stepTag="Önce test AVAX al" />
+        step >= 3 && <LockedCard label="Transfer Gönder" stepTag={`Önce test ${TOKEN_SYMBOL} al`} />
       )}
 
     </div>

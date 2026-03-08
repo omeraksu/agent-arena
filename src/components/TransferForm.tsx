@@ -3,7 +3,8 @@ import { useSendTransaction } from "thirdweb/react";
 import { prepareTransaction, toWei } from "thirdweb";
 import { chain, client } from "@/lib/thirdweb";
 import { postActivity, resolveNameToAddress } from "@/lib/api";
-import { DEFAULT_TRANSFER_AMOUNT, EXPLORER_TX_URL } from "@/config/constants";
+import { DEFAULT_TRANSFER_AMOUNT, EXPLORER_TX_URL, TOKEN_SYMBOL } from "@/config/constants";
+import { brand } from "@/config/brand";
 
 interface Props {
   senderAddress: string;
@@ -91,7 +92,7 @@ export default function TransferForm({ senderAddress, onSuccess }: Props) {
     <div className="cyber-card glow-green p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="h-1.5 w-1.5 rounded-full bg-[var(--neon-green)]" />
-        <h2 className="font-mono-data text-sm font-bold text-[var(--neon-green)] tracking-wider">TRANSFER_ETH</h2>
+        <h2 className="font-mono-data text-sm font-bold text-[var(--neon-green)] tracking-wider">TRANSFER_{TOKEN_SYMBOL}</h2>
       </div>
 
       <form onSubmit={handleSend} className="space-y-3">
@@ -120,7 +121,7 @@ export default function TransferForm({ senderAddress, onSuccess }: Props) {
           )}
         </div>
         <div>
-          <label className="font-mono-data text-[10px] text-gray-600 mb-1 block">AMOUNT_ETH</label>
+          <label className="font-mono-data text-[10px] text-gray-600 mb-1 block">AMOUNT_{TOKEN_SYMBOL}</label>
           <input
             type="number"
             step="0.001"
@@ -149,7 +150,7 @@ export default function TransferForm({ senderAddress, onSuccess }: Props) {
             rel="noopener noreferrer"
             className="text-[var(--neon-blue)] hover:underline"
           >
-            VIEW_ON_ETHERSCAN
+            VIEW_ON_{brand.explorerName.toUpperCase()}
           </a>
         </div>
       )}

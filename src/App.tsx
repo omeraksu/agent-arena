@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import TransferRequests from "./components/TransferRequests";
 import { getActivity } from "./lib/api";
 import { SESSION_RESET_POLL_INTERVAL } from "./config/constants";
+import { brand } from "./config/brand";
 import { ArenaProvider } from "./contexts/ArenaContext";
 
 // ─── Lazy-loaded route components ───
@@ -39,6 +40,7 @@ function handleSignOut(disconnect: ReturnType<typeof useDisconnect>["disconnect"
   localStorage.removeItem("arena_challenges");
   localStorage.removeItem("arena_handled_reset");
   localStorage.removeItem("arena_workshop_code");
+  localStorage.removeItem("arena_faucet_used");
   window.location.href = "/";
 }
 
@@ -70,7 +72,7 @@ function HUDHeader() {
 
       <div className="flex items-center gap-6 font-mono-data text-[10px]">
         <div className="flex gap-4">
-          <span className="text-gray-600">NET:<span className="text-[var(--neon-blue)] ml-1">FUJI</span></span>
+          <span className="text-gray-600 flex items-center gap-1">NET:<span className="text-[var(--neon-blue)] ml-1">{brand.networkShort}</span><svg width="10" height="10" viewBox={brand.logoSvgViewBox} fill="none" className="inline-block"><path d={brand.logoSvgPath} fill="var(--brand-color)" /></svg><span className="text-[9px] text-[var(--brand-color)] opacity-60">{brand.tokenSymbol}</span></span>
           <span className="text-gray-600">SYS:<span className="text-[var(--neon-green)] ml-1">ONLINE</span></span>
         </div>
         <TransferRequests />
@@ -164,6 +166,7 @@ function useSessionReset(isTabVisible: boolean) {
           localStorage.removeItem("arena_wallet_done");
           localStorage.removeItem("arena_challenges");
           localStorage.removeItem("arena_workshop_code");
+          localStorage.removeItem("arena_faucet_used");
           localStorage.setItem("arena_handled_reset", resetEvent.id);
           window.location.reload();
         }

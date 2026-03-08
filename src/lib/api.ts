@@ -18,7 +18,7 @@ export async function requestMint(address: string): Promise<{ txHash?: string; e
 
 export interface ActivityEvent {
   id: string;
-  type: "wallet_created" | "transfer" | "nft_mint" | "faucet" | "transfer_request" | "transfer_request_accepted" | "agent_registered" | "agent_message" | "instructor_broadcast" | "freeze" | "unfreeze" | "workshop_ended" | "quiz_completed" | "session_reset" | "meme_submitted" | "meme_voted" | "meme_winner" | "signal_pulse" | "lobby_joined" | "workshop_started" | "workshop_created";
+  type: "wallet_created" | "transfer" | "nft_mint" | "faucet" | "transfer_request" | "transfer_request_accepted" | "agent_registered" | "agent_message" | "instructor_broadcast" | "freeze" | "unfreeze" | "workshop_ended" | "quiz_completed" | "session_reset" | "meme_submitted" | "meme_voted" | "meme_winner" | "signal_pulse" | "lobby_joined" | "workshop_started" | "workshop_created" | "treasure_hunt_started" | "fragment_collected" | "treasure_redeemed";
   address: string;
   data: Record<string, string>;
   created_at: string;
@@ -542,6 +542,68 @@ export async function resetLobby(password: string): Promise<{ ok?: boolean; erro
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "reset_lobby", password }),
+  });
+  return res.json();
+}
+
+// ─── Treasure Hunt ───
+
+export interface TreasureFragment {
+  id: string;
+  owner_agent: string;
+  owner_address: string;
+  archetype: string;
+  fragment_code: string;
+  collected_by: string | null;
+  collected_at: string | null;
+  redeemed: boolean;
+}
+
+export interface TreasureStatus {
+  collected: TreasureFragment[];
+  count: number;
+  needed: number;
+  canRedeem: boolean;
+  hasRedeemed: boolean;
+}
+
+export async function getTreasureStatus(address: string): Promise<TreasureStatus> {
+  const res = await fetch(`/api/treasure?address=${encodeURIComponent(address)}`);
+  if (!res.ok) return { collected: [], count: 0, needed: 3, canRedeem: false, hasRedeemed: false };
+  return res.json();
+}
+
+export async function generateFragments(password: string): Promise<{ ok?: boolean; fragmentCount?: number; error?: string }> {
+  const res = await fetch("/api/treasure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "generate", password }),
+  });
+  return res.json();
+}
+
+export async function collectFragment(address: string, agentName: string): Promise<{
+  ok?: boolean;
+  fragmentCode?: string;
+  archetype?: string;
+  collected?: number;
+  needed?: number;
+  canRedeem?: boolean;
+  error?: string;
+}> {
+  const res = await fetch("/api/treasure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "collect", address, agentName }),
+  });
+  return res.json();
+}
+
+export async function redeemFragments(address: string): Promise<{ ok?: boolean; badge?: string; error?: string }> {
+  const res = await fetch("/api/treasure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "redeem", address }),
   });
   return res.json();
 }

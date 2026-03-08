@@ -318,7 +318,7 @@ export const skills: Skill[] = [
         ],
         correctIndex: 1,
         explanation:
-          "Block explorer (örn. Etherscan), blockchain'deki her şeyi şeffaf bir şekilde görüntülemeni sağlar. İşlemler, adresler, kontratlar — hepsi açık!",
+          "Block explorer (örn. Snowtrace), blockchain'deki her şeyi şeffaf bir şekilde görüntülemeni sağlar. İşlemler, adresler, kontratlar — hepsi açık!",
       },
       {
         id: "tx_5",

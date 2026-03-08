@@ -75,7 +75,7 @@ export default function ChallengeModule() {
           <div className="flex items-center gap-4 mb-2">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[var(--neon-green)] opacity-20" />
             <h1 className="font-mono-data text-3xl font-black text-[var(--neon-green)] tracking-tighter glitch-hover">
-              ETH_SKILLS
+              BLOCKCHAIN_SKILLS
             </h1>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[var(--neon-green)] opacity-20" />
           </div>

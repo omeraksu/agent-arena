@@ -212,6 +212,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "agent_name ve owner_address gerekli" });
     }
 
+    // Check if agent already exists (to avoid duplicate activity events)
+    let alreadyExists = false;
+    if (supabase) {
+      const { data } = await supabase
+        .from("agent_registry")
+        .select("agent_name")
+        .eq("agent_name", agent_name)
+        .single();
+      alreadyExists = !!data;
+    } else {
+      alreadyExists = agentRegistry.has(agent_name.toLowerCase());
+    }
+
     const record: AgentRecord = {
       session_id: session_id || crypto.randomUUID(),
       agent_name,
@@ -231,25 +244,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       agentRegistry.set(agent_name.toLowerCase(), record);
     }
 
-    // Post activity (best-effort)
-    try {
-      const proto = req.headers["x-forwarded-proto"] || "http";
-      const host = req.headers["x-forwarded-host"] || req.headers.host || "";
-      await fetch(`${proto}://${host}/api/activity`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "agent_registered",
-          address: owner_address,
-          data: {
-            agentName: agent_name,
-            archetype: archetype || "hacker",
-            ownerName: owner_name || "",
-          },
-        }),
-      });
-    } catch {
-      // best-effort
+    // Post activity only for NEW registrations (not updates)
+    if (!alreadyExists) {
+      try {
+        const proto = req.headers["x-forwarded-proto"] || "http";
+        const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+        await fetch(`${proto}://${host}/api/activity`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "agent_registered",
+            address: owner_address,
+            data: {
+              agentName: agent_name,
+              archetype: archetype || "hacker",
+              ownerName: owner_name || "",
+            },
+          }),
+        });
+      } catch {
+        // best-effort
+      }
     }
 
     return res.status(200).json({ ok: true, agent: record });

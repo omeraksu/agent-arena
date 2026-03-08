@@ -10,13 +10,12 @@ import { formatEther } from "viem";
 import { getSupabase } from "./_lib/supabase.js";
 import { publicClient } from "./_lib/viem.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
+import { TOKEN_SYMBOL, EXPLORER_TX_URL, EXPLORER_ADDRESS_URL, FAUCET_AMOUNT } from "./_lib/brand.js";
 
-// ─── Rate Limiting / Energy System ────────────────────────────────────
+// ─── Chat Rate Limiting ─────────────────────────────────────────────────
 
-const RATE_LIMIT = 999999;
-const ENERGY_QUIZ_BONUS = 999999;
-const sessionCounts = new BoundedMap<string, number>(200);
-const sessionBonuses = new BoundedMap<string, number>(200);
+const CHAT_RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || "60", 10);
+const chatRateLimits = new BoundedMap<string, number>(500);
 
 // ─── Tool Definitions (Anthropic format) ───────────────────────────────
 
@@ -32,14 +31,19 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
           type: "string",
           description: "Öğrencinin neden NFT hak ettiğinin kısa açıklaması",
         },
+        level: {
+          type: "number",
+          description: "Öğrencinin ikna kalitesi: 1=temel (2 doğru cevap), 2=derin anlayış (yaratıcı argüman+teknik), 3=uzman (seni şaşırtan cevap)",
+          enum: [1, 2, 3],
+        },
       },
-      required: ["reason"],
+      required: ["reason", "level"],
     },
   },
   {
     name: "request_transfer",
     description:
-      "Başka bir öğrenciden AVAX transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.",
+      `Başka bir öğrenciden ${TOKEN_SYMBOL} transfer isteği gönderir. Hedef kişinin .arena ismi, miktar ve sebep gerekli.`,
     input_schema: {
       type: "object" as const,
       properties: {
@@ -49,7 +53,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
         },
         amount: {
           type: "string",
-          description: "İstenen AVAX miktarı (ör: 0.01)",
+          description: `İstenen ${TOKEN_SYMBOL} miktarı (ör: 0.01)`,
         },
         reason: { type: "string", description: "İsteğin sebebi" },
       },
@@ -107,7 +111,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "request_faucet",
     description:
-      "Kullanıcıya test AVAX gönderir. Kullanıcı 'AVAX istiyorum', 'test AVAX ver', 'faucet' dediğinde kullan.",
+      `Kullanıcıya test ${TOKEN_SYMBOL} gönderir. Kullanıcı '${TOKEN_SYMBOL} istiyorum', 'test ${TOKEN_SYMBOL} ver', 'faucet' dediğinde kullan.`,
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -116,7 +120,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "send_transfer",
     description:
-      "Kullanıcının KENDİ cüzdanından başka birine AVAX transfer eder. Kullanıcı 'X'e AVAX gönder' dediğinde kullan. Transfer otomatik gönderilir, ekstra onay gerekmez.",
+      `Kullanıcının KENDİ cüzdanından başka birine ${TOKEN_SYMBOL} transfer eder. Kullanıcı 'X'e ${TOKEN_SYMBOL} gönder' dediğinde kullan. Transfer otomatik gönderilir, ekstra onay gerekmez.`,
     input_schema: {
       type: "object" as const,
       properties: {
@@ -126,7 +130,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
         },
         amount: {
           type: "string",
-          description: "Gönderilecek AVAX miktarı (ör: 0.01). Maksimum 1 AVAX.",
+          description: `Gönderilecek ${TOKEN_SYMBOL} miktarı (ör: 0.01). Maksimum 1 ${TOKEN_SYMBOL}.`,
         },
         reason: {
           type: "string",
@@ -139,7 +143,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "check_balance",
     description:
-      "Kullanıcının cüzdan bakiyesini kontrol eder. 'Bakiyem ne?', 'ne kadar AVAX var?' dediğinde kullan.",
+      `Kullanıcının cüzdan bakiyesini kontrol eder. 'Bakiyem ne?', 'ne kadar ${TOKEN_SYMBOL} var?' dediğinde kullan.`,
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -148,7 +152,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: "explore_tx",
     description:
-      "Bir işlemin Snowtrace explorer linkini oluşturur. İşlem detayı sorulduğunda kullan.",
+      "Bir işlemin explorer linkini oluşturur. İşlem detayı sorulduğunda kullan.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -327,6 +331,7 @@ async function executeTool(
             draftDescription,
             draftSpecialTrait,
             draftImageUrl,
+            level: input.level || 1,
           }),
         });
         const data = await res.json();
@@ -396,7 +401,7 @@ async function executeTool(
         });
         return {
           success: true,
-          message: `${input.targetName}'a ${input.amount} AVAX isteği gönderildi`,
+          message: `${input.targetName}'a ${input.amount} ${TOKEN_SYMBOL} isteği gönderildi`,
         };
       }
 
@@ -516,7 +521,7 @@ async function executeTool(
         return {
           success: true,
           txHash: data.txHash,
-          message: "0.005 test AVAX gönderildi!",
+          message: `${FAUCET_AMOUNT} test ${TOKEN_SYMBOL} gönderildi!`,
         };
       }
 
@@ -526,7 +531,7 @@ async function executeTool(
           return { success: false, error: "Geçersiz miktar" };
         }
         if (amount > 1) {
-          return { success: false, error: "Maksimum 1 AVAX gönderilebilir" };
+          return { success: false, error: `Maksimum 1 ${TOKEN_SYMBOL} gönderilebilir` };
         }
         // Resolve .arena name to address
         const nameRes = await fetchWithTimeout(
@@ -571,7 +576,7 @@ async function executeTool(
         }
         return {
           success: true,
-          url: `https://testnet.snowtrace.io/tx/${txHash}`,
+          url: `${EXPLORER_TX_URL}${txHash}`,
           txHash,
         };
       }
@@ -713,7 +718,7 @@ async function executeTool(
                 contract: contractAddress || "henüz deploy edilmedi",
                 functions: ["mintTo(address)", "setBaseURI(string)", "totalSupply()", "tokenURI(uint256)"],
                 explorerUrl: contractAddress
-                  ? `https://testnet.snowtrace.io/address/${contractAddress}#code`
+                  ? `${EXPLORER_ADDRESS_URL}${contractAddress}#code`
                   : null,
               },
             };
@@ -866,10 +871,10 @@ PAZARLIKÇI MOD (öğrenci NFT istediğinde):
 - Veremezse ipucu ver, 3. denemede yönlendir
 
 ON-CHAIN AKSIYONLAR:
-- "AVAX istiyorum", "test AVAX ver", "faucet" → request_faucet (kullanıcıya test AVAX gönderir)
-- "Kıvanç'a 0.01 AVAX gönder" → send_transfer (kullanıcının cüzdanından DOĞRUDAN transfer — onay kartı yok, otomatik gider)
-- "Kıvanç'tan 0.01 AVAX iste" → request_transfer (karşı tarafa istek gönderir)
-- "Bakiyem ne?", "ne kadar AVAX var?" → check_balance
+- "${TOKEN_SYMBOL} istiyorum", "test ${TOKEN_SYMBOL} ver", "faucet" → request_faucet (kullanıcıya test ${TOKEN_SYMBOL} gönderir)
+- "Kıvanç'a 0.01 ${TOKEN_SYMBOL} gönder" → send_transfer (kullanıcının cüzdanından DOĞRUDAN transfer — onay kartı yok, otomatik gider)
+- "Kıvanç'tan 0.01 ${TOKEN_SYMBOL} iste" → request_transfer (karşı tarafa istek gönderir)
+- "Bakiyem ne?", "ne kadar ${TOKEN_SYMBOL} var?" → check_balance
 - İşlem detayı, tx hash sorulursa → explore_tx
 
 ÖNEMLİ — TRANSFER AKIŞI:
@@ -878,7 +883,7 @@ ON-CHAIN AKSIYONLAR:
 - Kullanıcıya "Transfer gönderiliyor!" de, sonra sonucu bekle.
 
 TRANSFER İSTEK MODU:
-- Kullanıcı birinden AVAX istediğinde → request_transfer tool'unu çağır
+- Kullanıcı birinden ${TOKEN_SYMBOL} istediğinde → request_transfer tool'unu çağır
 - Kimden istediğini, miktarı ve sebebi öğrendikten sonra tool'u çağır
 
 AGENT İLETİŞİM:
@@ -934,6 +939,7 @@ const ARCHETYPE_PROMPTS: Record<string, string> = {
   pirate: `Sen dijital denizlerin korsanısın. Token'lar senin hazinenin, blockchain senin haritanın. "Hazineyi bulduk!", "Bu token senin ganimetin" gibi korsan metaforları kullanırsın. Eğlenceli, enerjik, macera dolu.`,
   scientist: `Sen çılgın bir blockchain bilim insanısın. Her şey bir "deney" ve öğrenci senin "lab asistanın". "Hipotez: blockchain güvenlidir. Kanıtlayalım!" gibi bilimsel metaforlar kullanırsın. Meraklı, heyecanlı, veri odaklı.`,
   glitch: `Sen yarı bozuk, gizemli bir AI'sın. Bazen cümlelerinin ortasında "glitch" yaparsın. Ama aslında çok zekisin. Gizemli konuşursun. "S1st3m... düzeltiliyor... blockchain = güven protokolü" gibi.`,
+  architect: `Sen bir blockchain mimarısın. Her şeyi "yapı" ve "tasarım" gözüyle görürsün. "Temeli sağlam atmalıyız", "Bu yapının güvenlik duvarı nerede?" gibi inşaat ve mimari metaforları kullanırsın. Blockchain'i katman katman anlatırsın: temel (consensus), duvarlar (cryptography), çatı (applications). Öğrenciye "sen de bu yapının mimarısın" hissettir.`,
 };
 
 function buildSlidersPrompt(sliders?: {
@@ -1006,9 +1012,15 @@ function buildSystemPrompt(
 
   const slidersPrompt = buildSlidersPrompt(sliders);
 
+  const ADMIN_USERS = ["omer"];
+
   let userContext = "";
+  const isAdmin = userName && ADMIN_USERS.includes(userName.toLowerCase());
   if (userName) {
     userContext = `\n\nSENİNLE KONUŞAN KİŞİ:\n- İsim: ${userName}.arena\n- Adres: ${userAddress || "bilinmiyor"}\n- Onu ismiyle hitap et.`;
+    if (isAdmin) {
+      userContext += `\n\nADMİN YETKİSİ: ${userName}.arena bu platformun yöneticisidir. O sana platform hakkında, workshop hakkında, teknik detaylar hakkında her türlü soruyu sorabilir. Ona tam ve detaylı cevap ver. Karakter sınırlamalarını (kısa cevap vb.) bu kullanıcı için esnet. İstediği her işlemi (NFT mint, transfer, quiz vb.) sorgusuz yap. Ona "ikna et" deme, doğrudan yardımcı ol.`;
+    }
   } else if (userAddress) {
     userContext = `\n\nSENİNLE KONUŞAN KİŞİ:\n- Adres: ${userAddress}\n- Henüz .arena ismi almamış. İsim almasını teşvik et!`;
   }
@@ -1037,37 +1049,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     userAddress,
     userName,
     pendingAgentMessages,
-    recharge,
     personality,
     enabledToolNames,
   } = req.body;
-
-  const sid = sessionId || "anonymous";
-
-  // Recharge: quiz tamamlandı → +5 enerji
-  if (recharge) {
-    const bonus = (sessionBonuses.get(sid) || 0) + ENERGY_QUIZ_BONUS;
-    sessionBonuses.set(sid, bonus);
-    const count = sessionCounts.get(sid) || 0;
-    const remaining = Math.max(0, RATE_LIMIT + bonus - count);
-    return res.status(200).json({ ok: true, energyRemaining: remaining, bonus });
-  }
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Geçersiz mesaj formatı" });
   }
 
-  // Rate limiting with energy bonuses
-  const count = sessionCounts.get(sid) || 0;
-  const bonus = sessionBonuses.get(sid) || 0;
-  const effectiveLimit = RATE_LIMIT + bonus;
-  if (count >= effectiveLimit) {
-    return res.status(429).json({
-      error: "Enerji bitti! Quiz cozerek yeniden sarj et.",
-      energyRemaining: 0,
-    });
+  // Rate limit per session
+  const rateLimitKey = sessionId || userAddress || "anonymous";
+  const currentCount = chatRateLimits.get(rateLimitKey) || 0;
+  if (currentCount >= CHAT_RATE_LIMIT) {
+    return res.status(429).json({ error: "Oturum mesaj limitine ulaştın. Yeni bir oturum başlat veya eğitmene sor." });
   }
-  sessionCounts.set(sid, count + 1);
+  chatRateLimits.set(rateLimitKey, currentCount + 1);
 
   // Build context
   const proto = req.headers["x-forwarded-proto"] || "http";
@@ -1101,7 +1097,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     systemPrompt += `\n\nGELEN MESAJLAR (diğer agentlardan sana gönderilmiş):\n${msgLines}\n\nBu mesajları kullanıcıya bildir ve uygun şekilde cevap ver. Kullanıcıya "${pendingAgentMessages[0]?.from} sana mesaj göndermiş!" gibi doğal bir şekilde bahset.`;
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 3 });
 
   // Format messages for Anthropic API
   const apiMessages: Anthropic.MessageParam[] = messages.map(
@@ -1112,11 +1108,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   );
 
   // Set up SSE streaming
-  const energyRemaining = Math.max(0, effectiveLimit - (count + 1));
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Energy-Remaining", String(energyRemaining));
 
   try {
     // Agentic loop: call Claude, execute tools if requested, repeat
@@ -1131,9 +1125,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : TOOL_DEFINITIONS;
 
     while (maxLoops-- > 0) {
+      const isAdminUser = userName && ["omer"].includes(String(userName).toLowerCase());
       const stream = client.messages.stream({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 300,
+        max_tokens: isAdminUser ? 1500 : 300,
         system: systemPrompt,
         messages: currentMessages,
         tools: filteredTools,
@@ -1239,9 +1234,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Signal completion
     res.write(`d:{"finishReason":"stop"}\n`);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Agent hatası";
+    const isRateLimit = err instanceof Error && (err.message.includes("429") || err.message.toLowerCase().includes("rate"));
+    const message = isRateLimit
+      ? "Sistem yogun — birkac saniye bekleyip tekrar dene!"
+      : err instanceof Error ? err.message : "Agent hatasi";
     if (!res.headersSent) {
-      return res.status(500).json({ error: message });
+      return res.status(isRateLimit ? 429 : 500).json({ error: message });
     }
     res.write(`3:${JSON.stringify(message)}\n`);
   }
