@@ -900,11 +900,11 @@ YENİ YETENEKLER:
 
 YASAK: Yatırım tavsiyesi, mainnet yönlendirmesi
 
-ETHSKILLS BİLGİ BANKASI (doğru ve güncel bilgiler — eğitim amaçlı kullan):
+BİLGİ BANKASI (doğru ve güncel bilgiler — eğitim amaçlı kullan):
 
 Gas & Maliyetler (2026):
-- Ethereum mainnet ETH transferi: ~$0.004. Swap: ~$0.04. ERC-20 deploy: ~$0.24.
-- "Ethereum pahalı" 2021-2023'te doğruydu, 2026'da YANLIŞ. Gas 1 gwei altında.
+- Avalanche C-Chain AVAX transferi: ~$0.001. Swap: ~$0.01. ERC-20 deploy: ~$0.05.
+- Avalanche C-Chain son derece ucuz — Ethereum'un aksine sürekli düşük gas.
 - L2 transfer: $0.0003. L2 swap: $0.002-0.003.
 - Öğrenci "blockchain pahalı" derse düzelt: gerçek rakamları ver.
 
@@ -912,10 +912,10 @@ Temel Kavramlar:
 - Smart contract KENDİNİ çalıştıramaz. Her fonksiyon bir çağırıcı (caller) gerektirir ve o gas öder.
 - Blockchain'de timer, cron job, scheduler YOK. Tasarım teşviklerle (incentives) yapılır.
 - Her state değişikliği için düşün: kim çağırır? Neden çağırır? Kimse çağırmazsa ne olur?
-- "Onchain" tek kelime, tire yok. Ethereum topluluk kuralı.
+- "Onchain" tek kelime, tire yok. Blockchain topluluk kuralı.
 
 Standartlar:
-- ERC-20: Fungible token standardı (USDC, DAI gibi). USDC 6 decimal, ETH 18 decimal — bu fark BÜYÜK hata kaynağı.
+- ERC-20: Fungible token standardı (USDC, DAI gibi). USDC 6 decimal, AVAX 18 decimal — bu fark BÜYÜK hata kaynağı.
 - ERC-721: NFT standardı. Her token benzersiz bir ID'ye sahip. Sahiplik kanıtı.
 - ERC-8004: Onchain agent identity — Ocak 2026'da 20+ chain'de deploy edildi. AI agent'ların onchain kimliği.
 - EIP-7702: EOA'lara smart contract süper güçleri veriyor, migration gerekmez. Canlı.

@@ -153,3 +153,29 @@ Ama daha onemli olan sure degil, surenin icindeki dagilim:
   Engagement'in bir kismi spam kaynakli. 1000 event'in ~650'si gercek aktivite, ~350'si tekrarli agent_registered + faucet spam. Yani gercek kullanim yoğunluğu gorunenden biraz dusuk ama yine de saglam.
 
   Kisa cevap: 3 saat, bu yas grubu ve bu icerik icin ideal. Veriler ogrencilerin sikilmadan tum sureci yasadigini gosteriyor.
+
+  ┌──────────────────┬─────────────┐
+  │      Metrik      │    Deger    │
+  ├──────────────────┼─────────────┤
+  │ Toplam ogrenci   │ 24          │
+  ├──────────────────┼─────────────┤
+  │ Cuzdan olusturan │ 29*         │
+  ├──────────────────┼─────────────┤
+  │ Tam yolculuk     │ 18          │
+  ├──────────────────┼─────────────┤
+  │ Completion rate  │ %75 (18/24) │
+  └──────────────────┴─────────────┘
+
+  Gercek katilim orani
+
+  24 ogrencinin 18'i tum adimlari tamamlamis (cuzdan + faucet + transfer + agent + NFT). Bu hands-on bir blockchain workshop'u icin cok yuksek — tipik beklenti %40-50 iken %75 elde edilmis.
+
+  Kalan 6 kisi ne yapti?
+
+  - 29 cuzdandan admin/test hesaplari cikarilinca (omer, numan gibi) gercek ogrenci cuzdani ~24-25 civari
+  - 6 kisi muhtemelen cuzdan olusturup faucet aldı ama agent/NFT asamasina gecmedi
+  - Bunlarin bir kismi da cuzdan olusturmada takilmis olabilir (wallet_created spam'i bunu destekliyor)
+
+  Ozet
+
+  24 kisiden 18'inin 3 saatte cuzdan olusturup, AVAX alip, transfer yapip, agent'i ikna edip NFT mint etmesi — %75 completion, bu yas grubu icin cok basarili.

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "ai/react";
 import { useActiveAccount } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
@@ -20,6 +20,8 @@ import {
   type MadLibsPersonality,
 } from "@/config/archetypes";
 import MarkdownMessage from "./MarkdownMessage";
+
+const AgentBuilder = lazy(() => import("./builder/AgentBuilder"));
 
 // ─── Feature 2: Tool Progress Stages ───
 const TOOL_PROGRESS_STAGES: Record<string, string[]> = {
@@ -1421,65 +1423,41 @@ export default function AgentChat() {
     );
   }
 
-  if (step === 0) {
-    return <GhostAwakening onComplete={() => setStep(1)} />;
-  }
-
-  if (step === 1) {
+  // ─── Steps 0-4: Visual Agent Builder ───
+  if (step >= 0 && step <= 4) {
     return (
-      <AgentNaming
-        onComplete={(name) => {
-          setAgentName(name);
-          setStep(2);
-        }}
-      />
-    );
-  }
-
-  if (step === 2) {
-    return (
-      <AgentPersonality
-        personality={personality}
-        onChange={setPersonality}
-        onComplete={() => {
-          // Derive archetype from personality text for colors/animations
-          const archId = deriveArchetypeFromPersonality(personality);
-          const arch = ARCHETYPES.find((a) => a.id === archId) || ARCHETYPES[0];
+      <Suspense fallback={
+        <div className="text-center py-20">
+          <p className="font-mono-data text-sm text-gray-600 animate-pulse">{">"} loading_builder...</p>
+        </div>
+      }>
+      <AgentBuilder
+        onComplete={(config) => {
+          const arch = ARCHETYPES.find((a) => a.id === config.derivedArchetypeId) || ARCHETYPES[0];
+          setAgentName(config.name);
+          setPersonality(config.personality);
+          setEnabledChips(config.enabledChips);
           setArchetype(arch);
-          setStep(3);
+          // Directly finish onboarding with the compiled config
+          const agentConfig = {
+            version: 2 as const,
+            name: config.name,
+            personality: config.personality,
+            enabledChips: config.enabledChips,
+            derivedArchetypeId: config.derivedArchetypeId,
+          };
+          localStorage.setItem("arena_agent_config", JSON.stringify(agentConfig));
+          setMessages([
+            {
+              id: "welcome",
+              role: "assistant" as const,
+              content: getWelcomeMessage(arch, config.name),
+            },
+          ]);
+          setStep(5);
         }}
       />
-    );
-  }
-
-  if (step === 3) {
-    return (
-      <CapabilityChipsStep
-        enabledChips={enabledChips}
-        onChange={setEnabledChips}
-        onComplete={() => {
-          // Ensure archetype is derived if not yet set
-          if (!archetype) {
-            const archId = deriveArchetypeFromPersonality(personality);
-            const arch = ARCHETYPES.find((a) => a.id === archId) || ARCHETYPES[0];
-            setArchetype(arch);
-          }
-          setStep(4);
-        }}
-      />
-    );
-  }
-
-  if (step === 4 && archetype) {
-    return (
-      <CompileDeploy
-        agentName={agentName}
-        archetype={archetype}
-        personality={personality}
-        enabledChipCount={enabledChips.length}
-        totalChipCount={CAPABILITY_CHIPS.length}
-        onComplete={finishOnboarding}
-      />
+      </Suspense>
     );
   }
 

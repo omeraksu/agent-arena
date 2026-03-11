@@ -276,7 +276,7 @@ const SLIDES: SlideData[] = [
         ╰──●──╯
      [ NODES: 11,000+ ]`,
     stat: "%99.99 uptime",
-    statSource: "Ethereum 2015'ten beri durdurulamaz çalışıyor — fişi çekilemeyen tek bilgisayar",
+    statSource: "Avalanche 2020'den beri durdurulamaz çalışıyor — saniyeler içinde kesinleşen işlemler",
     description: "Binlerce bilgisayarın aynı anda çalıştığı devasa bir ağ.",
     highlight: "Patronu yok, kuralları kodla yazılmış, matematik tarafından korunuyor.",
   },

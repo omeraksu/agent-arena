@@ -44,7 +44,7 @@ export default function AgentDiscovery() {
       const state = channel.presenceState();
       const names = new Set<string>();
       for (const presences of Object.values(state)) {
-        for (const p of presences) {
+        for (const p of presences as Array<Record<string, string>>) {
           if (p.agent_name) names.add(p.agent_name);
         }
       }

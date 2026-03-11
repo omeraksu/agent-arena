@@ -170,7 +170,7 @@ body::after {
 }
 
 .right-terminal {
-  width: 33.33%;
+  width: 50%;
   background: rgba(7, 8, 15, 0.9);
   border-left: 1px solid var(--border-dim);
   backdrop-filter: blur(8px);
@@ -322,4 +322,174 @@ body::after {
 }
 .count-pulse {
   animation: countPulse 1s ease-out both;
+}
+
+/* ─── Agent Builder (n8n/Linear style) ─── */
+
+.builder-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 7rem);
+  width: 100%;
+  overflow: hidden;
+}
+
+.builder-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0f1117;
+  flex-shrink: 0;
+}
+
+.builder-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.builder-palette {
+  width: 100%;
+  height: 100%;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: #13151e;
+  padding: 12px 6px;
+  overflow-y: auto;
+}
+
+.builder-resize-handle {
+  width: 5px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+  transition: background 0.15s;
+}
+.builder-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.15s, height 0.15s;
+}
+.builder-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.builder-resize-handle:hover::after {
+  background: rgba(255, 255, 255, 0.2);
+  height: 48px;
+}
+.builder-resize-handle:active::after {
+  background: #6b7280;
+  height: 64px;
+}
+
+.builder-canvas {
+  flex: 1;
+  min-width: 0;
+}
+
+/* React Flow overrides */
+.builder-reactflow .react-flow__node {
+  cursor: grab;
+}
+.builder-reactflow .react-flow__node:active {
+  cursor: grabbing;
+}
+.builder-reactflow .react-flow__pane {
+  cursor: grab;
+}
+
+/* Builder node base — clean rounded cards */
+.builder-node {
+  background: #1a1d27;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.builder-node:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.builder-node-connected {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.builder-node-dim {
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.builder-node-dim:hover {
+  opacity: 0.6;
+}
+
+/* Identity node — subtle emerald accent */
+.builder-node-identity {
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+/* Handle styling — small, neutral */
+.builder-handle {
+  width: 6px !important;
+  height: 6px !important;
+  background: #6b7280 !important;
+  border: 2px solid #1a1d27 !important;
+}
+
+/* Responsive palette */
+@media (max-width: 600px) {
+  .builder-body {
+    flex-direction: column;
+  }
+  .builder-body > div:first-child {
+    width: 100% !important;
+    height: auto;
+    max-height: 120px;
+    flex-shrink: 0;
+  }
+  .builder-resize-handle {
+    display: none;
+  }
+  .builder-palette {
+    width: 100%;
+    height: auto;
+    max-height: 120px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px;
+    gap: 4px;
+  }
+  .builder-palette > div {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+  .builder-palette > div > div {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+  .builder-palette > div > p {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 8px;
+    white-space: nowrap;
+  }
+}
+
+/* MiniMap dark theme */
+.builder-reactflow .react-flow__minimap {
+  border-radius: 6px;
 }

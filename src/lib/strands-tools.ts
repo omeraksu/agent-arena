@@ -1,7 +1,7 @@
 /**
  * Strands Agent Tool Definitions — 6 typed tools
  *
- * Tag-based yaklaşım ([MINT_APPROVED], [REQUEST_ETH]) yerine
+ * Tag-based yaklaşım ([MINT_APPROVED], [REQUEST_AVAX]) yerine
  * gerçek tool calls kullanıyor.
  */
 import { tool } from "@strands-agents/sdk";
