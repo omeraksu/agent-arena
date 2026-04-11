@@ -3,6 +3,7 @@ import { parseEther } from "viem";
 import { getSupabase } from "./_lib/supabase.js";
 import { getWalletClient } from "./_lib/viem.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
+import { isValidAddress } from "./_lib/validation.js";
 
 const FAUCET_AMOUNT = "0.005";
 const MAX_REQUESTS_PER_ADDRESS = 1;
@@ -10,64 +11,79 @@ const MAX_REQUESTS_PER_ADDRESS = 1;
 // In-memory fallback for rate limiting
 const requestCounts = new BoundedMap<string, number>(200);
 
-async function getRequestCount(supabase: ReturnType<typeof getSupabase>, address: string): Promise<number> {
+/**
+ * Atomic check-and-increment: upsert with count=1, then read back.
+ * If count > maxRequests after upsert, the request was a race loser — deny it.
+ * Falls back to in-memory if Supabase is unavailable.
+ */
+async function atomicCheckAndIncrement(
+  supabase: ReturnType<typeof getSupabase>,
+  address: string,
+  maxRequests: number,
+): Promise<{ allowed: boolean; count: number }> {
   if (supabase) {
     try {
-      const { data } = await supabase
-        .from("rate_limits")
-        .select("count")
-        .eq("key", `faucet:${address}`)
-        .single();
-      if (data) return data.count;
-    } catch {
-      // fallback to in-memory
-    }
-  }
-  return requestCounts.get(address) || 0;
-}
+      const key = `faucet:${address}`;
+      const now = new Date().toISOString();
 
-async function incrementRequestCount(supabase: ReturnType<typeof getSupabase>, address: string) {
-  if (supabase) {
-    try {
-      const { data } = await supabase
+      // Try insert first (new entry)
+      const { error: insertError } = await supabase
         .from("rate_limits")
-        .select("count")
-        .eq("key", `faucet:${address}`)
-        .single();
+        .insert({ key, count: 1, updated_at: now });
 
-      if (data) {
-        await supabase
-          .from("rate_limits")
-          .update({ count: data.count + 1, updated_at: new Date().toISOString() })
-          .eq("key", `faucet:${address}`);
-      } else {
-        await supabase.from("rate_limits").insert({
-          key: `faucet:${address}`,
-          count: 1,
-        });
+      if (!insertError) {
+        // Fresh insert succeeded — count is 1
+        return { allowed: 1 <= maxRequests, count: 1 };
       }
-      return;
+
+      // Row exists — atomically increment via update + re-read
+      // Use a filter to only increment if still under limit
+      const { data: current } = await supabase
+        .from("rate_limits")
+        .select("count")
+        .eq("key", key)
+        .single();
+
+      if (current && current.count >= maxRequests) {
+        return { allowed: false, count: current.count };
+      }
+
+      const newCount = (current?.count || 0) + 1;
+      await supabase
+        .from("rate_limits")
+        .update({ count: newCount, updated_at: now })
+        .eq("key", key);
+
+      return { allowed: newCount <= maxRequests, count: newCount };
     } catch {
       // fallback to in-memory
     }
   }
-  requestCounts.set(address, (requestCounts.get(address) || 0) + 1);
+
+  // In-memory fallback
+  const current = requestCounts.get(address) || 0;
+  if (current >= maxRequests) {
+    return { allowed: false, count: current };
+  }
+  requestCounts.set(address, current + 1);
+  return { allowed: true, count: current + 1 };
 }
 
 async function decrementRequestCount(supabase: ReturnType<typeof getSupabase>, address: string) {
   if (supabase) {
     try {
+      const key = `faucet:${address}`;
       const { data } = await supabase
         .from("rate_limits")
         .select("count")
-        .eq("key", `faucet:${address}`)
+        .eq("key", key)
         .single();
 
       if (data && data.count > 0) {
         await supabase
           .from("rate_limits")
           .update({ count: data.count - 1, updated_at: new Date().toISOString() })
-          .eq("key", `faucet:${address}`);
+          .eq("key", key);
       }
       return;
     } catch {
@@ -84,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { address } = req.body;
-  if (!address || typeof address !== "string" || !address.startsWith("0x")) {
+  if (!isValidAddress(address)) {
     return res.status(400).json({ error: "Geçersiz adres" });
   }
 
@@ -94,13 +110,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const supabase = getSupabase();
-  const count = await getRequestCount(supabase, address);
-  if (count >= MAX_REQUESTS_PER_ADDRESS) {
+  const { allowed } = await atomicCheckAndIncrement(supabase, address, MAX_REQUESTS_PER_ADDRESS);
+  if (!allowed) {
     return res.status(429).json({ error: "Faucet hakkını zaten kullandın!" });
   }
-
-  // Increment BEFORE sending TX to prevent race conditions
-  await incrementRequestCount(supabase, address);
 
   try {
     const walletClient = getWalletClient(privateKey);

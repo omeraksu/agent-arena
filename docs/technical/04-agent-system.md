@@ -1,4 +1,4 @@
-# Agent Arena — AI Agent Sistemi
+# ARIA Hub — AI Agent Sistemi
 
 ## Mimari Genel Bakis
 

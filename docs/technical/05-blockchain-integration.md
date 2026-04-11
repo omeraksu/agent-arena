@@ -1,4 +1,4 @@
-# Agent Arena — Blockchain & Wallet Entegrasyonu
+# ARIA Hub — Blockchain & Wallet Entegrasyonu
 
 ## Ag Bilgileri
 
@@ -103,7 +103,7 @@ contract WorkshopNFT is ERC721, Ownable {
     string private _baseTokenURI;
 
     constructor(string memory baseURI)
-        ERC721("Agent Arena Workshop", "ARENA")
+        ERC721("ARIA Hub Workshop", "ARENA")
         Ownable(msg.sender)
     {
         _baseTokenURI = baseURI;
@@ -130,7 +130,7 @@ contract WorkshopNFT is ERC721, Ownable {
 
 | Ozellik | Deger |
 |---|---|
-| Token ismi | Agent Arena Workshop |
+| Token ismi | ARIA Hub Workshop |
 | Token sembol | ARENA |
 | Standart | ERC-721 |
 | OpenZeppelin | v5.6.1 |
@@ -226,10 +226,10 @@ ERC-721 standart metadata (`GET /api/metadata/<tokenId>`):
 ```json
 {
   "name": "CIPHER — Neon Hacker",
-  "description": "Agent Arena Workshop'ta olusturulmus dijital kimlik.",
+  "description": "ARIA Hub Workshop'ta olusturulmus dijital kimlik.",
   "image": "https://agent-arena.vercel.app/nft/hacker.svg",
   "attributes": [
-    { "trait_type": "Workshop", "value": "Agent Arena Workshop" },
+    { "trait_type": "Workshop", "value": "ARIA Hub Workshop" },
     { "trait_type": "Date", "value": "2026-03-11" },
     { "trait_type": "Achievement", "value": "agent_convinced" },
     { "trait_type": "Archetype", "value": "hacker" },

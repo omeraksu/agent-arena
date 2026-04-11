@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+/* ════════════════════════════════════════════════════════════
+   ARENA DESIGN TOKENS — Tailwind v4 @theme
+   Kaynak: DESIGN_STATE.md + CLAUDE.md > Design System
+   Kullanım: bg-arena-bg-base, text-arena-text-primary, bg-arena-red/15 vb.
+   Mode switching: <ScreenShell mode="event"> → data-mode="event"
+   ════════════════════════════════════════════════════════════ */
+@theme {
+  /* Backgrounds (Hub Mode default) */
+  --color-arena-bg-deep: #0b0d12;
+  --color-arena-bg-base: #12141a;
+  --color-arena-bg-surface: #1a1d26;
+  --color-arena-bg-elevated: #222634;
+
+  /* Text */
+  --color-arena-text-primary: #e8e9ed;
+  --color-arena-text-secondary: #9195a0;
+  --color-arena-text-tertiary: #5c6070;
+  --color-arena-text-muted: #363a48;
+
+  /* Accents */
+  --color-arena-red: #e84142;
+  --color-arena-teal: #2ec4a0;
+  --color-arena-blue: #3b82f6;
+  --color-arena-purple: #8b5cf6;
+  --color-arena-amber: #f59e0b;
+
+  /* Radius (mode-specific) */
+  --radius-arena-hub: 8px;
+  --radius-arena-event: 2px;
+}
+
+/* Event Mode — bg palette bir tık daha koyu */
+[data-mode="event"] {
+  --color-arena-bg-deep: #080a0f;
+  --color-arena-bg-base: #0b0d12;
+  --color-arena-bg-surface: #12141a;
+  --color-arena-bg-elevated: #1a1d26;
+}
+
 :root {
   --neon-green: #00ffaa;
   --neon-blue: #00d4ff;

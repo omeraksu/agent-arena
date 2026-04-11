@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabase } from "./_lib/supabase.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
+import { isValidAddress } from "./_lib/validation.js";
 
 // In-memory fallback
 const nameRegistry = new BoundedMap<string, string>(500); // address → username
@@ -62,6 +63,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!address || !username) {
       return res.status(400).json({ error: "address and username required" });
+    }
+    if (!isValidAddress(address)) {
+      return res.status(400).json({ error: "Geçersiz adres" });
     }
 
     // Validate username: 3-16 chars, alphanumeric + underscore

@@ -2,7 +2,13 @@
 // Tek dosyayı değiştirerek tüm siteyi yeni bir brand'e geçirebilirsin.
 
 export interface BrandConfig {
-  // İsim & Metin
+  // Ürün kimliği (UI wordmark / display)
+  productName: string;       // "ARIA Hub"
+  productWordmark: string;   // "ARIA_HUB" (mono/terminal stili)
+  productShort: string;      // "ARIA" (compact wordmark)
+  productTagline: string;    // "blockchain_education_arena"
+
+  // Ağ (Avalanche) bilgileri
   name: string;
   networkName: string;
   networkShort: string;
@@ -36,6 +42,13 @@ export interface BrandConfig {
 // ─── Avalanche Fuji Testnet (varsayılan) ──────────────────────────────
 
 export const brand: BrandConfig = {
+  // Ürün kimliği
+  productName: "ARIA Hub",
+  productWordmark: "ARIA_HUB",
+  productShort: "ARIA",
+  productTagline: "blockchain_education_arena",
+
+  // Ağ
   name: "Avalanche",
   networkName: "Avalanche Fuji",
   networkShort: "FUJI",

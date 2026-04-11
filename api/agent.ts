@@ -11,11 +11,62 @@ import { getSupabase } from "./_lib/supabase.js";
 import { publicClient } from "./_lib/viem.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
 import { TOKEN_SYMBOL, EXPLORER_TX_URL, EXPLORER_ADDRESS_URL, FAUCET_AMOUNT } from "./_lib/brand.js";
+import { TEAM1_KNOWLEDGE } from "./_lib/team1-knowledge.js";
 
 // ─── Chat Rate Limiting ─────────────────────────────────────────────────
 
 const CHAT_RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_SESSION || "60", 10);
-const chatRateLimits = new BoundedMap<string, number>(500);
+const chatRateLimits = new BoundedMap<string, number>(500); // in-memory fallback
+
+/**
+ * Check and increment chat rate limit.
+ * Primary: Supabase (persistent across cold starts).
+ * Fallback: in-memory BoundedMap.
+ */
+async function checkChatRateLimit(
+  supabase: ReturnType<typeof getSupabase>,
+  key: string,
+  limit: number,
+): Promise<boolean> {
+  if (supabase) {
+    try {
+      const rateKey = `chat:${key}`;
+      const now = new Date().toISOString();
+
+      // Try insert first
+      const { error: insertError } = await supabase
+        .from("rate_limits")
+        .insert({ key: rateKey, count: 1, updated_at: now });
+
+      if (!insertError) return true; // first message, allowed
+
+      // Row exists — read + increment
+      const { data } = await supabase
+        .from("rate_limits")
+        .select("count")
+        .eq("key", rateKey)
+        .single();
+
+      if (data && data.count >= limit) return false;
+
+      const newCount = (data?.count || 0) + 1;
+      await supabase
+        .from("rate_limits")
+        .update({ count: newCount, updated_at: now })
+        .eq("key", rateKey);
+
+      return newCount <= limit;
+    } catch {
+      // fallback to in-memory
+    }
+  }
+
+  // In-memory fallback
+  const count = chatRateLimits.get(key) || 0;
+  if (count >= limit) return false;
+  chatRateLimits.set(key, count + 1);
+  return true;
+}
 
 // ─── Tool Definitions (Anthropic format) ───────────────────────────────
 
@@ -900,38 +951,9 @@ YENİ YETENEKLER:
 
 YASAK: Yatırım tavsiyesi, mainnet yönlendirmesi
 
-BİLGİ BANKASI (doğru ve güncel bilgiler — eğitim amaçlı kullan):
-
-Gas & Maliyetler (2026):
-- Avalanche C-Chain AVAX transferi: ~$0.001. Swap: ~$0.01. ERC-20 deploy: ~$0.05.
-- Avalanche C-Chain son derece ucuz — Ethereum'un aksine sürekli düşük gas.
-- L2 transfer: $0.0003. L2 swap: $0.002-0.003.
-- Öğrenci "blockchain pahalı" derse düzelt: gerçek rakamları ver.
-
-Temel Kavramlar:
-- Smart contract KENDİNİ çalıştıramaz. Her fonksiyon bir çağırıcı (caller) gerektirir ve o gas öder.
-- Blockchain'de timer, cron job, scheduler YOK. Tasarım teşviklerle (incentives) yapılır.
-- Her state değişikliği için düşün: kim çağırır? Neden çağırır? Kimse çağırmazsa ne olur?
-- "Onchain" tek kelime, tire yok. Blockchain topluluk kuralı.
-
-Standartlar:
-- ERC-20: Fungible token standardı (USDC, DAI gibi). USDC 6 decimal, AVAX 18 decimal — bu fark BÜYÜK hata kaynağı.
-- ERC-721: NFT standardı. Her token benzersiz bir ID'ye sahip. Sahiplik kanıtı.
-- ERC-8004: Onchain agent identity — Ocak 2026'da 20+ chain'de deploy edildi. AI agent'ların onchain kimliği.
-- EIP-7702: EOA'lara smart contract süper güçleri veriyor, migration gerekmez. Canlı.
-- x402: HTTP 402 ödeme protokolü — makine-makine ticaret için. Production-ready.
-
-Cüzdanlar & Güvenlik:
-- Private key veya API key'i Git'e ASLA commit etme. Botlar sızdırılmış secret'ları saniyeler içinde exploit eder.
-- Safe (Gnosis Safe) $60B+ varlık güvence altında. Production treasury'ler için kullan.
-- Account Abstraction: kullanıcı gas ödemez, sponsor (paymaster) öder. Workshop'ta biz bunu kullanıyoruz.
-
-Layer 2'ler:
-- Base en ucuz büyük L2. Arbitrum en derin DeFi likiditesine sahip.
-- Polygon zkEVM kapatılıyor, üzerinde inşa etme.
-- Celo artık L1 değil — Mart 2025'te OP Stack L2'ye migrate etti.
-
-Bu bilgileri öğrenciye açıklarken archetype dilinle anlat, düz ezber gibi sayma.`;
+BİLGİ BANKASI (Team1 Türkiye + Avalanche ekosistemi — eğitim amaçlı kullan):
+${TEAM1_KNOWLEDGE}
+Bu bilgileri öğrenciye archetype dilinle anlat, düz ezber gibi sayma. Yönlendirme yaparken Core Wallet → Academy → Builder Hub → Grant funnel'ını takip et.`;
 
 const ARCHETYPE_PROMPTS: Record<string, string> = {
   hacker: `Sen yeraltı dünyasından bir hacker'sın. Kodlama ve sistem kırma metaforlarıyla konuşursun. "Firewall'ı geçtik", "exploit bulduk" gibi terimler kullanırsın. Blockchain'i hacklenmez bir sistem olarak anlatırsın. Kısa, keskin, teknik ama anlaşılır.`,
@@ -1057,13 +1079,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Geçersiz mesaj formatı" });
   }
 
-  // Rate limit per session
+  // Rate limit per session (persistent via Supabase, in-memory fallback)
   const rateLimitKey = sessionId || userAddress || "anonymous";
-  const currentCount = chatRateLimits.get(rateLimitKey) || 0;
-  if (currentCount >= CHAT_RATE_LIMIT) {
+  const rateLimitAllowed = await checkChatRateLimit(getSupabase(), rateLimitKey, CHAT_RATE_LIMIT);
+  if (!rateLimitAllowed) {
     return res.status(429).json({ error: "Oturum mesaj limitine ulaştın. Yeni bir oturum başlat veya eğitmene sor." });
   }
-  chatRateLimits.set(rateLimitKey, currentCount + 1);
 
   // Build context
   const proto = req.headers["x-forwarded-proto"] || "http";

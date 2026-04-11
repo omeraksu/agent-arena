@@ -1,10 +1,12 @@
-# CLAUDE.md — Agent Arena
+# CLAUDE.md — ARIA Hub
+
+> **Rebrand notu:** Proje daha önce "Agent Arena" olarak anılıyordu. v0.3 sprint'iyle birlikte ürün adı **ARIA Hub** oldu ("Avalanche Research & Interface Architect"). Repo path'i (`agent-arena/`), git history ve bazı dış rapor dosyalarında eski ad korunur; UI, yeni dokümanlar ve kod-içi string'lerin tamamı "ARIA Hub" kullanır.
 
 ## Proje Nedir?
 
-Agent Arena, blockchain workshop'larında katılımcılara uygulamalı deneyim sunan bir eğitim platformudur. Katılımcılar bir AI agent ile etkileşime girer, embedded cüzdan üzerinden on-chain aktiviteler gerçekleştirir ve agent geliştirme sürecinin gereksinimlerini bizzat yaşayarak öğrenir.
+ARIA Hub, Avalanche blockchain üzerinde gamified bir eğitim platformudur. Katılımcılar bir AI agent ("ARIA") ile etkileşime girer, embedded cüzdan üzerinden on-chain aktiviteler gerçekleştirir ve blockchain geliştirme sürecinin gereksinimlerini bizzat yaşayarak öğrenir.
 
-Koza DAO + Team1 çatısı altında geliştirilmektedir.
+Team1 Türkiye + Koza DAO + Kozalak Hub çatısı altında geliştirilmektedir.
 
 ## Mevcut Durum: Sprint v0.1 — "Mersin Workshop"
 
@@ -159,7 +161,7 @@ Koza DAO + Team1 çatısı altında geliştirilmektedir.
   - Mint ettikleri NFT görseli + metadata
   - Workshop'ta yaptıkları işlemlerin özeti
   - Fuji Explorer linkleri (tx hash'leri)
-  - "Agent Arena Workshop Katılımcısı" rozeti
+  - "ARIA Hub Workshop Katılımcısı" rozeti
 - **Teknik:** Statik sayfa, cüzdan adresi ile erişim. Veri zaten on-chain, ekstra backend gerekmez.
 
 ## Workshop Akışı (v0.1) — Quiz Verisine Göre Optimize Edildi
@@ -226,6 +228,93 @@ Zaman   Aktivite                          Platform/Araç         Not
 | Realtime | **Supabase Realtime** (veya polling) | Canlı sınıf feed'i — ücretsiz tier yeterli |
 | Challenge | ethskills (fork veya embed) | Hazır blockchain eğitim altyapısı |
 | Deploy | **Vercel (tek deploy)** | Frontend + Edge Functions tek yerde. Tek `vercel deploy` komutu |
+
+## Design System & Team Architecture
+
+### Figma Kaynak
+- **File:** `ghCzy7dVnXFAHBovxmncjw`
+- **Sayfalar:** 01 Foundations · 02 Components · 04 Archive · 05 Hub Mode · 06 Event Mode
+- **Token collection:** "ARIA Hub / Tokens" (55 variable, 2 mod: Hub/Event)
+- **Component library:** 42 component, 12 kategori (Section/Arena Components)
+
+### Renk Paleti (Avalanche-native)
+| Token | Hub Mode | Event Mode | Kullanım |
+|-------|----------|------------|----------|
+| `bg/deep` | #0B0D12 | #080A0F | En koyu zemin |
+| `bg/base` | #12141A | #0B0D12 | Ana zemin |
+| `bg/surface` | #1A1D26 | #12141A | Kart yüzeyleri |
+| `bg/elevated` | #222634 | #1A1D26 | Hover/elevated |
+| `text/primary` | #E8E9ED | #E8E9ED | Ana metin |
+| `text/secondary` | #9195A0 | #9195A0 | İkincil metin |
+| `text/tertiary` | #5C6070 | #5C6070 | Label/hint |
+| `accent/red` | #E84142 | #E84142 | Avalanche CTA |
+| `accent/teal` | #2EC4A0 | #2EC4A0 | Başarı/XP/terminal |
+| `accent/blue` | #3B82F6 | #3B82F6 | Info/öğrenme |
+| `accent/purple` | #8B5CF6 | #8B5CF6 | Quest/gamification |
+| `accent/amber` | #F59E0B | #F59E0B | Streak/uyarı |
+
+### İki Mod Farkı
+- **Hub Mode:** `bg/base` zemin, Inter dominant, teal sadece XP'de, 6-8px radius, ease-out 200ms
+- **Event Mode:** `bg/deep` zemin, JetBrains Mono dominant, neon accent'ler parlak, 2px radius, dramatic transitions
+
+### Tipografi
+| Kontekst | Font | Ağırlık | Boyut |
+|----------|------|---------|-------|
+| Hub başlık | Inter | Semi Bold | 16-22px |
+| Hub body | Inter | Regular | 12-14px |
+| Data/label | JetBrains Mono | Regular | 9-10px |
+| Event başlık | Inter | Black | 28-44px |
+| Event body | JetBrains Mono | Bold | 11-13px |
+| Terminal prefix | JetBrains Mono | Regular | 9-10px |
+
+### Component Kataloğu
+Button(5) · Badge(7) · Pill(4) · Tag(5) · ProgressBar(3) · Input(2) · Card(3) · ChatBubble(2) · Stat(5) · Avatar(4) · Nav(1) · CornerMarks(1) = 42 toplam
+
+### Ekran Envanteri
+**Hub Mode (7):** Home · Quest Arena · Quest Detail · Chat · Profile · Leaderboard · NFT Detail
+**Event Mode (10):** Splash Gate · Profiling · Agent Reveal · Chat Session · Persuasion Milestone · Reward Gate · Wallet Connect · NFT Celebration · Share Card · Session Complete
+
+### Tailwind Token Mapping
+```js
+// tailwind.config.js — colors
+colors: {
+  arena: {
+    bg: { deep: '#0B0D12', base: '#12141A', surface: '#1A1D26', elevated: '#222634' },
+    text: { primary: '#E8E9ED', secondary: '#9195A0', tertiary: '#5C6070', muted: '#363A48' },
+    red: { DEFAULT: '#E84142', muted: 'rgba(232,65,66,0.15)', subtle: 'rgba(232,65,66,0.08)' },
+    teal: { DEFAULT: '#2EC4A0', muted: 'rgba(46,196,160,0.15)', subtle: 'rgba(46,196,160,0.08)' },
+    blue: { DEFAULT: '#3B82F6', muted: 'rgba(59,130,246,0.15)' },
+    purple: { DEFAULT: '#8B5CF6', muted: 'rgba(139,92,246,0.15)' },
+    amber: { DEFAULT: '#F59E0B', muted: 'rgba(245,158,11,0.15)' },
+  }
+}
+```
+
+### Design Karar Kuralları
+1. Renk seçimi: Her accent'in bir ANLAMI var. Rastgele renk kullanma.
+2. Red = Avalanche brand/CTA. Her zaman aksiyon çağrısı.
+3. Teal = Başarı/XP/terminal DNA. Neon yeşilin rafine hali.
+4. Event Mode ekranlarında corner marks (Decoration/CornerMarks) zorunlu.
+5. Hub Mode'da border-radius 6-8px, Event Mode'da 2px.
+6. Component kullanımı zorunlu — raw element yerleştirme YASAK.
+7. Her yeni ekran için: instance count artmalı, raw element count azalmalı.
+
+### Design Team (self-updating)
+```
+┌─────────────────────────────────────────────┐
+│              DESIGN LEAD (ARIA)              │
+│   Koordinasyon · Karar · Figma MCP bridge    │
+├──────────┬──────────┬──────────┬─────────────┤
+│ ui-eng   │ ux-res   │ motion   │ token-sync  │
+│ Implement│ Validate │ Animate  │ Sync state  │
+└──────────┴──────────┴──────────┴─────────────┘
+```
+- **design-lead** (ARIA) → tasarım kararları, Figma yönetimi, ekip koordinasyonu
+- **ui-engineer** → Figma→Code pipeline, token binding, component implementation
+- **ux-researcher** (Cem) → flow validation, persona library (Elif/Kerem/Zeynep), red flag tespiti
+- **token-sync** → `DESIGN_STATE.md` auto-update, Figma audit, tailwind config sync
+
+State dosyası: [`DESIGN_STATE.md`](./DESIGN_STATE.md) (proje kökünde). Agent prompt'ları: `.claude/agents/`. Detaylı spec: `docs/design-team/`.
 
 ## Dosya Yapısı
 
@@ -416,3 +505,10 @@ Bu proje aşamalı geliştiriliyor. Her sprint'te:
 - "Bu güzel olur ama şart değil" → Sonraki faza bırak
 - "Bunu hazır bir servis yapıyor" → Servisi kullan, kendimiz yazma
 - "Ayrı bir backend servisi mi lazım?" → Hayır, Edge Function yeterli mi bak önce
+
+**Design team agent kullanımı:**
+- Tasarım kararları ve Figma yönetimi için → `design-lead` (ARIA)
+- Figma→Code implementation, component/token binding için → `ui-engineer`
+- Flow validation, kullanıcı persona testi, red flag tespiti için → `ux-researcher` (Cem)
+- Yeni component/ekran/token sonrası state sync için → `token-sync`
+- Detaylı spec: `docs/design-team/` · State: `DESIGN_STATE.md` · Prompt'lar: `.claude/agents/`

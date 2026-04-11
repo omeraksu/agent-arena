@@ -1,4 +1,4 @@
-# Agent Arena — Veritabani Semasi
+# ARIA Hub — Veritabani Semasi
 
 ## Genel Bakis
 
@@ -188,7 +188,7 @@ ERC-721 token metadata'si. `api/metadata/[tokenId].ts` bu tabloyu sorgular.
 | `name` | `text` | NOT NULL | NFT ismi |
 | `description` | `text` | | NFT aciklamasi |
 | `image` | `text` | | `/nft/<archetype>.svg` veya mutlak URL |
-| `workshop_name` | `text` | DEFAULT `'Agent Arena Workshop'` | |
+| `workshop_name` | `text` | DEFAULT `'ARIA Hub Workshop'` | |
 | `workshop_date` | `text` | | ISO tarih (YYYY-MM-DD) |
 | `arena_name` | `text` | | Sahibinin .arena ismi |
 | `archetype` | `text` | | Agent archetype'i |

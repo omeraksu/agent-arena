@@ -1,4 +1,4 @@
-# Agent Arena — Durum Raporu
+# ARIA Hub — Durum Raporu
 
 **Tarih:** 7 Mart 2026
 **Versiyon:** v0.1 + Sprint 2 Ozellikleri

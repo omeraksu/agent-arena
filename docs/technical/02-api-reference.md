@@ -1,4 +1,4 @@
-# Agent Arena — API Referansi
+# ARIA Hub — API Referansi
 
 Tum endpoint'ler Vercel Serverless Functions olarak `api/` dizininde yer alir. Paylasilan altyapi `api/_lib/` altindadir.
 
@@ -595,7 +595,7 @@ ERC-721 standart metadata endpoint'i. NFT marketplace'ler ve explorer'lar bu URL
   description: string;
   image: string;            // mutlak URL
   attributes: [
-    { trait_type: "Workshop", value: "Agent Arena Workshop" },
+    { trait_type: "Workshop", value: "ARIA Hub Workshop" },
     { trait_type: "Date", value: "2026-03-11" },
     { trait_type: "Achievement", value: "agent_convinced" },
     // Opsiyonel: Archetype, Agent Name, Arena Name

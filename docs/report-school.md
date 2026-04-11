@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Workshop** | Agent Arena — Blockchain ve Yapay Zeka Atölyesi |
+| **Workshop** | ARIA Hub — Blockchain ve Yapay Zeka Atölyesi |
 | **Tarih** | 7 Mart 2026 |
 | **Okul** | Güney Gelişim Koleji, Mersin |
 | **Süre** | 3 saat |
@@ -16,7 +16,7 @@
 
 ## Workshop Özeti
 
-7 Mart 2026'da Güney Gelişim Koleji'nde 3 saatlik uygulamalı bir blockchain ve yapay zeka workshop'u düzenlendi. Öğrenciler lab bilgisayarlarında tarayıcı üzerinden Agent Arena platformuna bağlanarak dijital cüzdan oluşturdu, arkadaşlarına dijital para transferi yaptı, bir yapay zeka agent'ı ile sohbet ederek blockchain bilgilerini test etti ve NFT (dijital sahiplik belgesi) kazandı.
+7 Mart 2026'da Güney Gelişim Koleji'nde 3 saatlik uygulamalı bir blockchain ve yapay zeka workshop'u düzenlendi. Öğrenciler lab bilgisayarlarında tarayıcı üzerinden ARIA Hub platformuna bağlanarak dijital cüzdan oluşturdu, arkadaşlarına dijital para transferi yaptı, bir yapay zeka agent'ı ile sohbet ederek blockchain bilgilerini test etti ve NFT (dijital sahiplik belgesi) kazandı.
 
 Workshop'un amacı öğrencilerin blockchain ve yapay zeka teknolojilerini **teorik değil, uygulamalı olarak** deneyimlemesiydi. Herhangi bir yazılım kurulumu gerektirmeden, sadece tarayıcı üzerinden tüm aktiviteler gerçekleştirildi.
 
@@ -24,7 +24,7 @@ Workshop'un amacı öğrencilerin blockchain ve yapay zeka teknolojilerini **teo
 
 ## Ön Quiz Sonuçları (Workshop Öncesi)
 
-Workshop'tan önce 45 öğrenci "Gelişim Challenge" ön quiz'ini tamamladı. Bu quiz, öğrencilerin yapay zeka ve blockchain konularındaki mevcut bilgi seviyesini ölçmek amacıyla uygulandı.
+Workshop'tan önce 50+ öğrenci "Gelişim Challenge" ön quiz'ini tamamladı. Bu quiz, öğrencilerin yapay zeka ve blockchain konularındaki mevcut bilgi seviyesini ölçmek amacıyla uygulandı.
 
 ### Genel Sonuçlar
 
@@ -140,19 +140,6 @@ Workshop boyunca öğrenci ilgisi sürekli yüksek kaldı:
 
 ---
 
-## Öne Çıkan Öğrenciler
-
-Ön quiz sonuçlarına göre özellikle dikkat çeken öğrenciler:
-
-| Öğrenci | Sınıf | Puan | Rozet | Öne Çıkan Özellik |
-|---|---|---|---|---|
-| **Muhammed Utku M.** | 11A | 94/100 | Dijital Kaşif | Boss soruda AI+blockchain entegrasyonunu profesyonel düzeyde açıkladı. Biyometrik veri takibi ve blokzincir şeffaflığını birleştiren detaylı senaryo üretti. |
-| **Tarık Uşan** | 6A | — | Dijital Kaşif | 6. sınıf öğrencisi olmasına rağmen ileri düzeyde yapılandırılmış cevaplar verdi. AI ajanı ve blokzincir ayrımını net kavramış. |
-| **Kıvanç Kurt** | 10A | 94/100 | Dijital Kaşif | Quiz'i sadece 4 dakikada tamamladı — hem hızlı hem doğru. Algoritmik düşünce yapısı güçlü. |
-| **Ali Deniz Tekniker** | 11A | 94/100 | Dijital Kaşif | Pratik uygulama senaryoları üretti. Yoklama sistemi için görüntü tanıma + blockchain entegrasyonu önerdi. |
-
----
-
 ## Sonuç ve Öneriler
 
 ### Workshop Değerlendirmesi
@@ -173,6 +160,6 @@ Her öğrenci workshop'ta kazandığı NFT'yi ve işlem geçmişini içeren kiş
 
 ---
 
-*Bu rapor Agent Arena platformu workshop verileri baz alınarak hazırlanmıştır.*
+*Bu rapor ARIA Hub platformu workshop verileri baz alınarak hazırlanmıştır.*
 *Platform: [agent-arena.vercel.app](https://agent-arena.vercel.app)*
 *Organizatör: Koza DAO + Team1*

@@ -6,6 +6,7 @@ import { getActivity } from "./lib/api";
 import { SESSION_RESET_POLL_INTERVAL } from "./config/constants";
 import { brand } from "./config/brand";
 import { ArenaProvider } from "./contexts/ArenaContext";
+import { V2App } from "./v2/V2App";
 
 // ─── Lazy-loaded route components ───
 const Hub = lazy(() => import("./components/Hub"));
@@ -65,7 +66,7 @@ function HUDHeader() {
       <div className="flex items-center gap-3">
         <div className="h-2 w-2 rounded-full bg-[var(--neon-green)] animate-pulse" />
         <a href="/" className="font-mono-data text-xs font-bold text-[var(--neon-green)] glitch-hover tracking-widest">
-          ARENA_OS //
+          ARIA_HUB //
         </a>
         <span className="font-mono-data text-[9px] text-[var(--neon-green)] opacity-30">v0.1</span>
       </div>
@@ -188,6 +189,19 @@ export default function App() {
   const isLobby = location.pathname === "/lobby";
   const isMinimalLayout = isInstructor || isLobby;
   const isTabVisible = useIsTabVisible();
+
+  // V2 route'ları tamamen ayrı shell kullanıyor (Faz 1+)
+  // Mobile-first Hub/Quest/Chat/Profile akışı için izole layer.
+  const isV2 = location.pathname.startsWith("/v2");
+  if (isV2) {
+    return (
+      <ArenaProvider>
+        <Routes>
+          <Route path="/v2/*" element={<V2App />} />
+        </Routes>
+      </ArenaProvider>
+    );
+  }
 
   // Auto-reload when instructor resets the session
   useSessionReset(isTabVisible);

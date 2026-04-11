@@ -8,9 +8,10 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabase } from "./_lib/supabase.js";
+import { isValidAddress, safePasswordCompare } from "./_lib/validation.js";
 
 const FRAGMENTS_NEEDED = 3;
-const INSTRUCTOR_PASSWORD = process.env.INSTRUCTOR_PASSWORD || "arena2026";
+const INSTRUCTOR_PASSWORD = process.env.INSTRUCTOR_PASSWORD;
 
 // In-memory fallback
 interface Fragment {
@@ -90,7 +91,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Generate fragments (instructor) ───
   if (action === "generate") {
-    if (password !== INSTRUCTOR_PASSWORD) {
+    if (!INSTRUCTOR_PASSWORD) {
+      return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+    }
+    if (!safePasswordCompare(password || "", INSTRUCTOR_PASSWORD)) {
       return res.status(403).json({ error: "Invalid password" });
     }
 
@@ -147,9 +151,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Collect a fragment ───
   if (action === "collect") {
-    const collectorAddress = (address || "").toLowerCase();
-    if (!collectorAddress || !agentName) {
-      return res.status(400).json({ error: "address and agentName required" });
+    if (!isValidAddress(address)) {
+      return res.status(400).json({ error: "Geçersiz adres" });
+    }
+    const collectorAddress = address.toLowerCase();
+    if (!agentName) {
+      return res.status(400).json({ error: "agentName required" });
     }
 
     if (supabase) {
@@ -228,8 +235,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── Redeem fragments ───
   if (action === "redeem") {
-    const redeemer = (address || "").toLowerCase();
-    if (!redeemer) return res.status(400).json({ error: "address required" });
+    if (!isValidAddress(address)) {
+      return res.status(400).json({ error: "Geçersiz adres" });
+    }
+    const redeemer = address.toLowerCase();
 
     if (supabase) {
       const { data: collected } = await supabase

@@ -1,4 +1,4 @@
-# Agent Arena — Platform Dokümantasyonu
+# ARIA Hub — Platform Dokümantasyonu
 
 > Blockchain workshop'larında katılımcılara uygulamalı deneyim sunan eğitim platformu.
 > Koza DAO + Team1 tarafından geliştirilmektedir.
@@ -7,7 +7,7 @@
 
 ## 1. Platform Nedir?
 
-Agent Arena, öğrencilerin bir AI agent ile sohbet ederek blockchain kavramlarını **deneyimleyerek** öğrendiği bir workshop platformudur. Katılımcılar:
+ARIA Hub, öğrencilerin bir AI agent ile sohbet ederek blockchain kavramlarını **deneyimleyerek** öğrendiği bir workshop platformudur. Katılımcılar:
 
 - Tarayıcıdan tek tıkla cüzdan oluşturur (MetaMask yok, seed phrase yok)
 - Arkadaşlarına token transfer eder (gas ücreti yok)
@@ -61,7 +61,7 @@ Kullanıcı (Tarayıcı)
 
 ```solidity
 contract WorkshopNFT is ERC721, Ownable {
-    // İsim: "Agent Arena Workshop", Sembol: "ARENA"
+    // İsim: "ARIA Hub Workshop", Sembol: "ARENA"
     // mintTo(address) — sadece owner mint edebilir
     // setBaseURI(string) — metadata endpoint'i güncelleme
     // totalSupply() — toplam basılmış NFT sayısı
@@ -370,7 +370,7 @@ Platform 6 kategori altında toplam 20+ soru barındırır. Her kategori bir "sk
 | 1 | Kripto cüzdan gerçekte ne saklar? | Private key (özel anahtar) | Cüzdan coin saklamaz, işlem imzalamak için gereken özel anahtarı saklar. |
 | 2 | Public key (açık anahtar) ne işe yarar? | Başkalarının sana kripto göndermesini sağlar | Banka hesap numarası gibi — paylaşılabilir. |
 | 3 | Seed phrase'ini kaybedersen ne olur? | Cüzdanına bir daha erişemezsin | Seed phrase tek kurtarma yolu. Kaybolursa fonlara erişim kalıcı olarak kaybolur. |
-| 4 | Account Abstraction ne sağlar? | Cüzdanı akıllı kontrat gibi programlanabilir yapar | Gas sponsorluğu, sosyal kurtarma gibi özellikler. Agent Arena'da bu sayede gas ücreti yok. |
+| 4 | Account Abstraction ne sağlar? | Cüzdanı akıllı kontrat gibi programlanabilir yapar | Gas sponsorluğu, sosyal kurtarma gibi özellikler. ARIA Hub'da bu sayede gas ücreti yok. |
 
 #### GAS & FEES — Gas ve İşlem Ücretleri
 
@@ -379,7 +379,7 @@ Platform 6 kategori altında toplam 20+ soru barındırır. Her kategori bir "sk
 | 1 | Gas ücreti nedir? | Ağ kullanım bedeli | Ethereum'da her işlem hesaplama gücü harcar. Gas bu gücün maliyetidir. |
 | 2 | Gas fiyatı ne zaman artar? | Ağ kalabalık olduğunda | Talep arttıkça gas fiyatı yükselir (EIP-1559 mekanizması). |
 | 3 | Layer 2 çözümler neden daha ucuzdur? | İşlemleri toplu olarak ana zincire gönderirler | Yüzlerce işlemi tek bir Ethereum işlemi olarak paketler (rollup). |
-| 4 | "Gasless transaction" gerçekten ücretsiz mi? | Hayır, ücreti başka biri öder (Paymaster) | Agent Arena'da gas ücretini platform öder — öğrenci görmez. |
+| 4 | "Gasless transaction" gerçekten ücretsiz mi? | Hayır, ücreti başka biri öder (Paymaster) | ARIA Hub'da gas ücretini platform öder — öğrenci görmez. |
 
 #### TX ANATOMY — İşlem Anatomisi
 
@@ -449,7 +449,7 @@ Her NFT şu bilgileri taşır:
   "name": "Neon Katana",
   "description": "Blockchain'in gücünü keşfeden bir dijital savaşçı",
   "image": "https://storage.supabase.co/nft-images/...",
-  "workshop_name": "Agent Arena Workshop",
+  "workshop_name": "ARIA Hub Workshop",
   "arena_name": "kivanc.arena",
   "archetype": "hacker",
   "agent_name": "CyberBlade",
@@ -679,4 +679,4 @@ Zaman    Aktivite                          Süre    Modül
 
 ---
 
-*Bu döküman Agent Arena v0.1.0 (Mersin Workshop Release) kod tabanından otomatik olarak derlenmiştir.*
+*Bu döküman ARIA Hub v0.1.0 (Mersin Workshop Release) kod tabanından otomatik olarak derlenmiştir.*

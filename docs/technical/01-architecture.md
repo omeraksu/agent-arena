@@ -1,8 +1,8 @@
-# Agent Arena — Sistem Mimarisi
+# ARIA Hub — Sistem Mimarisi
 
 ## Genel Bakis
 
-Agent Arena, blockchain workshop'larinda katilimcilara uygulamali deneyim sunan bir egitim platformudur. Tek bir Vite + React SPA, Vercel Serverless Functions backend, Supabase realtime veri katmani ve Avalanche Fuji Testnet uzerinde calisir.
+ARIA Hub, blockchain workshop'larinda katilimcilara uygulamali deneyim sunan bir egitim platformudur. Tek bir Vite + React SPA, Vercel Serverless Functions backend, Supabase realtime veri katmani ve Avalanche Fuji Testnet uzerinde calisir.
 
 ```
                           ┌─────────────────────────────────────────┐

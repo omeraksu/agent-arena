@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabase } from "./_lib/supabase.js";
 import { getSessionResetTime } from "./_lib/session-reset-cache.js";
+import { safePasswordCompare } from "./_lib/validation.js";
 
 // ─── Types ───
 
@@ -185,11 +186,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ─── POST: Actions ───
   if (req.method === "POST") {
     const { action, password, code, address, username } = req.body || {};
-    const expectedPassword = process.env.INSTRUCTOR_PASSWORD || "arena2026";
+    const expectedPassword = process.env.INSTRUCTOR_PASSWORD;
 
     // ── create_workshop ──
     if (action === "create_workshop") {
-      if (password !== expectedPassword) {
+      if (!expectedPassword) {
+        return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+      }
+      if (!safePasswordCompare(password || "", expectedPassword)) {
         return res.status(401).json({ error: "Yetkisiz" });
       }
 
@@ -266,7 +270,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── start_workshop ──
     if (action === "start_workshop") {
-      if (password !== expectedPassword) {
+      if (!expectedPassword) {
+        return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+      }
+      if (!safePasswordCompare(password || "", expectedPassword)) {
         return res.status(401).json({ error: "Yetkisiz" });
       }
 
@@ -300,7 +307,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── reset_lobby ──
     if (action === "reset_lobby") {
-      if (password !== expectedPassword) {
+      if (!expectedPassword) {
+        return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+      }
+      if (!safePasswordCompare(password || "", expectedPassword)) {
         return res.status(401).json({ error: "Yetkisiz" });
       }
 

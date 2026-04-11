@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "./_lib/supabase.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
 import { invalidateResetCache, getSessionResetTime } from "./_lib/session-reset-cache.js";
+import { safePasswordCompare } from "./_lib/validation.js";
 
 // In-memory fallback stores
 const inMemoryEvents: Array<{
@@ -44,11 +45,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { action, password, message } = req.body;
-  const expectedPassword = process.env.INSTRUCTOR_PASSWORD || "arena2026";
+  const expectedPassword = process.env.INSTRUCTOR_PASSWORD;
 
   // Recap doesn't require password (student-facing)
-  if (action !== "recap" && password !== expectedPassword) {
-    return res.status(401).json({ error: "Yetkisiz erisim" });
+  if (action !== "recap") {
+    if (!expectedPassword) {
+      return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+    }
+    if (!safePasswordCompare(password || "", expectedPassword)) {
+      return res.status(401).json({ error: "Yetkisiz erisim" });
+    }
   }
 
   const supabase = getSupabase();

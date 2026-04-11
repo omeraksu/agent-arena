@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabase } from "./_lib/supabase.js";
 import { BoundedMap } from "./_lib/bounded-map.js";
 import { getSessionResetTime } from "./_lib/session-reset-cache.js";
+import { isValidAddress, safePasswordCompare } from "./_lib/validation.js";
 
 // In-memory state
 const signalRateLimit = new BoundedMap<string, number>(500);
@@ -142,8 +143,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── Start Round ───
     if (action === "start_round") {
-      const expectedPassword = process.env.INSTRUCTOR_PASSWORD || "arena2026";
-      if (password !== expectedPassword) {
+      const expectedPassword = process.env.INSTRUCTOR_PASSWORD;
+      if (!expectedPassword) {
+        return res.status(503).json({ error: "Sistem yapilandirmasi eksik" });
+      }
+      if (!safePasswordCompare(password || "", expectedPassword)) {
         return res.status(401).json({ error: "Yetkisiz" });
       }
 
@@ -166,8 +170,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── Send Signal ───
-    if (!address) {
-      return res.status(400).json({ error: "address gerekli" });
+    if (!isValidAddress(address)) {
+      return res.status(400).json({ error: "Geçersiz adres" });
     }
 
     // Round check: must have an active round

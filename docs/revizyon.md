@@ -1,8 +1,8 @@
-# Agent Arena — Eğitim Deneyimi İyileştirme Promptu
+# ARIA Hub — Eğitim Deneyimi İyileştirme Promptu
 
 ## Bağlam
 
-Agent Arena, Avalanche Fuji testnet üzerinde çalışan bir blockchain workshop platformu. Hedef kitle lise ve üniversite öğrencileri (45 kişilik gruplar). Platform React + Vite + Tailwind frontend, Vercel Serverless Functions backend, Supabase realtime DB kullanıyor.
+ARIA Hub, Avalanche Fuji testnet üzerinde çalışan bir blockchain workshop platformu. Hedef kitle lise ve üniversite öğrencileri (45 kişilik gruplar). Platform React + Vite + Tailwind frontend, Vercel Serverless Functions backend, Supabase realtime DB kullanıyor.
 
 Bu prompt'taki değişikliklerin tamamı **mevcut mimariyi bozmadan** yapılmalı. Yeni dosya yaratma, mevcut component ve config dosyalarını düzenleme öncelikli yaklaşım.
 

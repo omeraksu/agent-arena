@@ -1,4 +1,4 @@
-# Agent Arena — Platform Dokümantasyonu v2.0
+# ARIA Hub — Platform Dokümantasyonu v2.0
 
 > Blockchain workshop'larında katılımcılara uygulamalı deneyim sunan eğitim platformu.
 > Koza DAO + Team1 tarafından geliştirilmektedir.
@@ -11,7 +11,7 @@
 
 ## 1. Platform Nedir?
 
-Agent Arena, öğrencilerin bir AI agent ile sohbet ederek blockchain kavramlarını **deneyimleyerek** öğrendiği bir workshop platformudur. Katılımcılar:
+ARIA Hub, öğrencilerin bir AI agent ile sohbet ederek blockchain kavramlarını **deneyimleyerek** öğrendiği bir workshop platformudur. Katılımcılar:
 
 - Tarayıcıdan tek tıkla cüzdan oluşturur (MetaMask yok, seed phrase yok)
 - Arkadaşlarına token transfer eder (gas ücreti yok)
@@ -26,7 +26,7 @@ Platform "buton tıkla → mint" yaklaşımı yerine **"agent'ı ikna et → kaz
 
 ### 1.1 Platformun Fark Yarattığı Noktalar [YENİ]
 
-| Özellik | Geleneksel Yöntem | Agent Arena |
+| Özellik | Geleneksel Yöntem | ARIA Hub |
 |---------|------------------|-------------|
 | Cüzdan kurulum | 20+ dk, seed phrase ezber | 30 sn, email giriş |
 | Gas ödemeleri | Gerçek para gerekli | Tamamen gasless |
@@ -84,7 +84,7 @@ Kullanıcı (Tarayıcı)
 
 ```solidity
 contract WorkshopNFT is ERC721, Ownable {
-    // İsim: "Agent Arena Workshop", Sembol: "ARENA"
+    // İsim: "ARIA Hub Workshop", Sembol: "ARENA"
     // mintTo(address) — sadece owner mint edebilir
     // setBaseURI(string) — metadata endpoint'i güncelleme
     // totalSupply() — toplam basılmış NFT sayısı
@@ -463,7 +463,7 @@ Platform 8 kategori altında toplam 32+ soru barındırır. Her kategori bir "sk
 | 1 | Kripto cüzdan gerçekte ne saklar? | Private key (özel anahtar) | Cüzdan coin saklamaz, işlem imzalamak için gereken özel anahtarı saklar. |
 | 2 | Public key (açık anahtar) ne işe yarar? | Başkalarının sana kripto göndermesini sağlar | Banka hesap numarası gibi — paylaşılabilir. |
 | 3 | Seed phrase'ini kaybedersen ne olur? | Cüzdanına bir daha erişemezsin | Seed phrase tek kurtarma yolu. Kaybolursa fonlara erişim kalıcı olarak kaybolur. |
-| 4 | Account Abstraction ne sağlar? | Cüzdanı akıllı kontrat gibi programlanabilir yapar | Gas sponsorluğu, sosyal kurtarma gibi özellikler. Agent Arena'da bu sayede gas ücreti yok. |
+| 4 | Account Abstraction ne sağlar? | Cüzdanı akıllı kontrat gibi programlanabilir yapar | Gas sponsorluğu, sosyal kurtarma gibi özellikler. ARIA Hub'da bu sayede gas ücreti yok. |
 
 #### GAS & FEES — Gas ve İşlem Ücretleri
 
@@ -472,7 +472,7 @@ Platform 8 kategori altında toplam 32+ soru barındırır. Her kategori bir "sk
 | 1 | Gas ücreti nedir? | Ağ kullanım bedeli | Ethereum'da her işlem hesaplama gücü harcar. Gas bu gücün maliyetidir. |
 | 2 | Gas fiyatı ne zaman artar? | Ağ kalabalık olduğunda | Talep arttıkça gas fiyatı yükselir (EIP-1559 mekanizması). |
 | 3 | Layer 2 çözümler neden daha ucuzdur? | İşlemleri toplu olarak ana zincire gönderirler | Yüzlerce işlemi tek bir Ethereum işlemi olarak paketler (rollup). |
-| 4 | "Gasless transaction" gerçekten ücretsiz mi? | Hayır, ücreti başka biri öder (Paymaster) | Agent Arena'da gas ücretini platform öder — öğrenci görmez. |
+| 4 | "Gasless transaction" gerçekten ücretsiz mi? | Hayır, ücreti başka biri öder (Paymaster) | ARIA Hub'da gas ücretini platform öder — öğrenci görmez. |
 
 #### TX ANATOMY — İşlem Anatomisi
 
@@ -509,7 +509,7 @@ Platform 8 kategori altında toplam 32+ soru barındırır. Her kategori bir "sk
 | 2 | Blockchain üzerindeki bir AI agent ne avantaj kazanır? | İşlemlerinin değiştirilemez kaydını ve güvenilir kimliğini | Kimin ne zaman ne yaptığı şüpheye yer bırakmadan kanıtlanabilir. |
 | 3 | ERC-8004 ne sağlar? | AI agent'lara zincir üzerinde kalıcı kimlik ve cüzdan | Agent'lar artık sahibi olmadan da işlem yapabilir, para tutabilir. |
 | 4 | Bir agent "agentic loop"ta nasıl çalışır? | Düşünür → araç kullanır → sonucu değerlendirir → tekrar düşünür | Tek bir soruda birden fazla adım zincirleyerek karmaşık işler yapar. |
-| 5 | Agent Arena'da agent neden NFT vermeyi reddedebilir? | Öğrenci blockchain sorularını yeterince yanıtlamadıysa | Agent bir gatekeeper: bilgisiz davranışı ödüllendirmez. |
+| 5 | ARIA Hub'da agent neden NFT vermeyi reddedebilir? | Öğrenci blockchain sorularını yeterince yanıtlamadıysa | Agent bir gatekeeper: bilgisiz davranışı ödüllendirmez. |
 
 #### WEB3 ECONOMY — Merkeziyetsiz Ekonomi [YENİ KATEGORİ]
 
@@ -564,7 +564,7 @@ Her NFT şu bilgileri taşır:
   "name": "Neon Katana",
   "description": "Blockchain'in gücünü keşfeden bir dijital savaşçı",
   "image": "https://storage.supabase.co/nft-images/...",
-  "workshop_name": "Agent Arena Workshop",
+  "workshop_name": "ARIA Hub Workshop",
   "arena_name": "kivanc.arena",
   "archetype": "hacker",
   "agent_name": "CyberBlade",
@@ -940,5 +940,5 @@ Workshop sonunda eğitmene otomatik e-posta ile şu rapor gönderilir:
 
 ---
 
-*Bu döküman Agent Arena v0.1.0 (Mersin Workshop Release) üzerinden kapsamlı analiz ve v2.0 geliştirme önerileriyle yeniden yazılmıştır.*
+*Bu döküman ARIA Hub v0.1.0 (Mersin Workshop Release) üzerinden kapsamlı analiz ve v2.0 geliştirme önerileriyle yeniden yazılmıştır.*
 *Son güncelleme: Mart 2026 — Koza DAO + Team1*

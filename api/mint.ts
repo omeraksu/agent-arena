@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { encodeFunctionData } from "viem";
 import { getSupabase } from "./_lib/supabase.js";
+import { isValidAddress } from "./_lib/validation.js";
 import { publicClient, getWalletClient } from "./_lib/viem.js";
 
 const WORKSHOP_NFT_ABI = [
@@ -100,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { address, archetype, agentName, arenaName, draftName, draftDescription, draftSpecialTrait, draftImageUrl, level } = req.body;
-  if (!address || typeof address !== "string" || !address.startsWith("0x")) {
+  if (!isValidAddress(address)) {
     return res.status(400).json({ error: "Geçersiz adres" });
   }
 

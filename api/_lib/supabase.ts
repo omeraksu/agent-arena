@@ -5,7 +5,7 @@ let cached: SupabaseClient | null | undefined;
 export function getSupabase(): SupabaseClient | null {
   if (cached !== undefined) return cached;
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
+  const key = process.env.SUPABASE_SERVICE_KEY || "";
   if (!url || !key) {
     cached = null;
     return null;
