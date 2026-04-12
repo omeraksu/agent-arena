@@ -63,15 +63,15 @@ function EventShell() {
         <MobileFrame className="px-4 relative z-10">
           <Suspense fallback={<V2LoadingSpinner />}>
             <Routes>
-              <Route index element={<Navigate to="splash" replace />} />
-              <Route path="splash" element={<SplashGate />} />
-              <Route path="profiling" element={<ProfilingGate />} />
-              <Route path="reveal" element={<AgentReveal />} />
-              <Route path="chat" element={<EventChat />} />
-              <Route path="reward" element={<RewardGate />} />
-              <Route path="celebration" element={<NFTCelebration />} />
-              <Route path="complete" element={<SessionComplete />} />
-              <Route path="*" element={<Navigate to="splash" replace />} />
+              <Route path="/v2/event" element={<Navigate to="/v2/event/splash" replace />} />
+              <Route path="/v2/event/splash" element={<SplashGate />} />
+              <Route path="/v2/event/profiling" element={<ProfilingGate />} />
+              <Route path="/v2/event/reveal" element={<AgentReveal />} />
+              <Route path="/v2/event/chat" element={<EventChat />} />
+              <Route path="/v2/event/reward" element={<RewardGate />} />
+              <Route path="/v2/event/celebration" element={<NFTCelebration />} />
+              <Route path="/v2/event/complete" element={<SessionComplete />} />
+              <Route path="*" element={<Navigate to="/v2/event/splash" replace />} />
             </Routes>
           </Suspense>
         </MobileFrame>
@@ -88,13 +88,13 @@ function HubShell() {
       <MobileFrame className="px-4 pb-20">
         <Suspense fallback={<V2LoadingSpinner />}>
           <Routes>
-            <Route index element={<Navigate to="hub" replace />} />
-            <Route path="hub" element={<HubHome />} />
-            <Route path="quest" element={<QuestArena />} />
-            <Route path="quest/:id" element={<QuestDetail />} />
-            <Route path="chat" element={<ChatHub />} />
-            <Route path="profile" element={<ProfileV2 />} />
-            <Route path="*" element={<Navigate to="hub" replace />} />
+            <Route path="/v2" element={<Navigate to="/v2/hub" replace />} />
+            <Route path="/v2/hub" element={<HubHome />} />
+            <Route path="/v2/quest" element={<QuestArena />} />
+            <Route path="/v2/quest/:id" element={<QuestDetail />} />
+            <Route path="/v2/chat" element={<ChatHub />} />
+            <Route path="/v2/profile" element={<ProfileV2 />} />
+            <Route path="*" element={<Navigate to="/v2/hub" replace />} />
           </Routes>
         </Suspense>
       </MobileFrame>
